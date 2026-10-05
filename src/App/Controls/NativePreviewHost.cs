@@ -13,6 +13,10 @@ internal sealed class NativePreviewHost : HwndHost
     private const int WmMouseMove = 0x0200;
     private const uint PmRemove = 0x0001;
     private const int WmEraseBackground = 0x0014;
+    private const int WmImeStartComposition = 0x010D;
+    private const int WmImeEndComposition = 0x010E;
+    private const int WmImeComposition = 0x010F;
+    private const uint GcsResultString = 0x0800;
     private const int HtTransparent = -1;
     private const int WsChild = 0x40000000;
     private const int WsClipSiblings = 0x04000000;
@@ -27,6 +31,7 @@ internal sealed class NativePreviewHost : HwndHost
     private bool _presentationVisible;
     private byte _capturedMouseButtons;
     private bool _isFullScreenPresentation;
+    private bool _isImeComposing;
     private DeviceCornerProfile _cornerProfile = DeviceCornerProfile.Rectangular;
     private bool _usesDeviceCornerProfile;
     private (int Width, int Height, int Radius, double Curve)? _appliedRegion;
@@ -56,6 +61,7 @@ internal sealed class NativePreviewHost : HwndHost
         }
     }
     internal nint WindowHandle => _window;
+    internal bool IsImeComposing => _isImeComposing;
 
     internal void SetDeviceCornerProfile(DeviceCornerProfile profile, bool enabled)
     {
@@ -67,6 +73,8 @@ internal sealed class NativePreviewHost : HwndHost
 
     internal event EventHandler<PreviewPointerEventArgs>? PointerInput;
     internal event EventHandler<PreviewKeyboardEventArgs>? KeyboardInput;
+    internal event Action<string>? ImeTextCommitted;
+    internal event Action<bool>? ImeCompositionChanged;
 
     public NativePreviewHost()
     {
@@ -89,6 +97,17 @@ internal sealed class NativePreviewHost : HwndHost
 
     [DllImport("user32.dll")]
     private static extern nint SetFocus(nint window);
+
+    [DllImport("imm32.dll")]
+    private static extern nint ImmGetContext(nint window);
+
+    [DllImport("imm32.dll", EntryPoint = "ImmGetCompositionStringW", CharSet = CharSet.Unicode)]
+    private static extern int ImmGetCompositionString(nint context, uint index,
+        nint buffer, uint bufferLength);
+
+    [DllImport("imm32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ImmReleaseContext(nint window, nint context);
 
     protected override HandleRef BuildWindowCore(HandleRef hwndParent)
     {
@@ -233,6 +252,22 @@ internal sealed class NativePreviewHost : HwndHost
     protected override nint WndProc(nint hwnd, int message, nint wParam, nint lParam,
         ref bool handled)
     {
+        if (message == WmImeStartComposition)
+        {
+            _isImeComposing = true;
+            ImeCompositionChanged?.Invoke(true);
+        }
+        else if (message == WmImeEndComposition)
+        {
+            _isImeComposing = false;
+            ImeCompositionChanged?.Invoke(false);
+        }
+        else if (message == WmImeComposition &&
+            ((uint)lParam & GcsResultString) != 0)
+        {
+            var text = ReadImeResult(hwnd);
+            if (!string.IsNullOrEmpty(text)) ImeTextCommitted?.Invoke(text);
+        }
         if (message == WmNcHitTest)
         {
             if (CapturePointerInput)
@@ -354,6 +389,33 @@ internal sealed class NativePreviewHost : HwndHost
             return 1;
         }
         return base.WndProc(hwnd, message, wParam, lParam, ref handled);
+    }
+
+    private static string? ReadImeResult(nint hwnd)
+    {
+        var context = ImmGetContext(hwnd);
+        if (context == 0) return null;
+        try
+        {
+            var byteLength = ImmGetCompositionString(context, GcsResultString, 0, 0);
+            if (byteLength <= 0 || (byteLength & 1) != 0) return null;
+            var buffer = Marshal.AllocHGlobal(byteLength);
+            try
+            {
+                var read = ImmGetCompositionString(context, GcsResultString,
+                    buffer, (uint)byteLength);
+                return read > 0 && (read & 1) == 0
+                    ? Marshal.PtrToStringUni(buffer, read / sizeof(char)) : null;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+        }
+        finally
+        {
+            _ = ImmReleaseContext(hwnd, context);
+        }
     }
 
     private static short GetSignedLowWord(nint value) => unchecked((short)((long)value & 0xFFFF));

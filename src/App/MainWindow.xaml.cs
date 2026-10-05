@@ -368,6 +368,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _viewModel = new MainViewModel();
         MainPreviewHost.PointerInput += OnControlPointerInput;
         MainPreviewHost.KeyboardInput += OnControlKeyboardInput;
+        MainPreviewHost.ImeTextCommitted += OnControlTextInput;
+        MainPreviewHost.ImeCompositionChanged += OnImeCompositionChanged;
         _viewModel.SetMediaCastOutputProviders(
             CaptureMediaCastNv12Frame, CaptureMediaCastVideoFrame,
             afterSequence => _mediaCastAudioDecoder.GetPacket(afterSequence));
@@ -1419,6 +1421,24 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         HandleControlKeyboardInput(e, _viewModel.SelectedDevice?.Udid);
     }
 
+    private void OnControlTextInput(string text)
+    {
+        var udid = _viewModel.SelectedDevice?.Udid;
+        var window = _windowSource?.Handle ?? 0;
+        if (string.IsNullOrEmpty(text) || !_viewModel.IsUsbControlTarget(udid) ||
+            !CanForwardControlKeyboard(udid, window)) return;
+        _ = _viewModel.SendUsbPasteTextAsync(text, udid,
+            CaptureKeyboardSendGuard(window));
+    }
+
+    private void OnImeCompositionChanged(bool composing)
+    {
+        if (composing)
+            HandleControlKeyboardInput(new Controls.PreviewKeyboardEventArgs(
+                Controls.PreviewKeyboardKind.Reset, 0),
+                _viewModel.SelectedDevice?.Udid);
+    }
+
     private async void HandleControlKeyboardInput(
         Controls.PreviewKeyboardEventArgs e, string? sourceUdid = null,
         bool fromRawInput = false, nint? sourceWindow = null)
@@ -1434,6 +1454,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 ResetKeyboardOwnership();
             return;
         }
+        if (sourceWindow is null && _activeControlWindow == 0 &&
+            MainPreviewHost.IsImeComposing && _viewModel.IsUsbControlTarget(routeUdid))
+            return;
         if (_keyboardRouter.Mode == KeyboardInputMode.None &&
             _keyboardRouter.RequestedMode != KeyboardInputMode.None)
         {
