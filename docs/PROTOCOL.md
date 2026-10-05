@@ -185,13 +185,17 @@ HPD1 `DisplaySize` 是 QuickTime 主机能力/显示参数，不是可靠的 USB
 1080p/720p/540p 只限制 Windows 本地
 D3D11 渲染，不再改写 HPD1，也不会为切换档位重连 USB。
 
-有线会话将 HPD1 明确分为三种按设备保存的模式：
+有线会话将 HPD1 明确分为四种按设备保存的模式。它们都属于 QuickTime 私有 USB
+屏幕采集协议；其中“原生镜像”不再使用 AirPlay 命名，避免与无线 AirPlay Screen
+Mirroring 混淆：
 
-- A 演示模式（默认）：发送 `Valeria=true + 原生 DisplaySize` 以启动视频，但不执行
-  后续显示重配；代价是 iOS 状态栏日期、时间和电量使用演示值；
-- B AirPlay 实验模式：发送 `Valeria=false + DisplaySize`，默认使用型号原生尺寸，
-  并保留首帧探测、横竖屏识别及 HPD0/HPD1 自适应重配；高级模式可覆盖初始尺寸；
-- C 爱思兼容模式：发送 `Valeria=false + DisplaySize=1565×1565`，不进行自适应重配，
+- A 原生镜像（默认）：发送 `Valeria=false + 原生 DisplaySize`，保留真实 iOS 状态栏，
+  并使用首帧探测、横竖屏识别及 HPD0/HPD1 自适应重配；高级模式可覆盖初始尺寸；
+- B 纯原生（实验）：发送 `Valeria=false + 原生 DisplaySize`，但完全不执行后续
+  HPD0/HPD1 显示重配。它用于真机验证“手机显示什么，电脑就镜像什么”的最小干预路径；
+- C 演示兼容：发送 `Valeria=true + 原生 DisplaySize` 以启动视频且不执行后续显示重配。
+  兼容性较高，但 iOS 状态栏日期、时间和电量会使用 Apple 演示值；
+- D 爱思兼容：发送 `Valeria=false + DisplaySize=1565×1565`，不进行自适应重配，
   以固定协商换取兼容性，但会降低源画面清晰度。
 
 ## 8. Windows 重新设计
