@@ -5,8 +5,9 @@ namespace IPhoneMirror.App.Models;
 internal enum UsbProjectionMode : uint
 {
     Demo = 0,
-    AirPlay = 1,
+    NativeAdaptive = 1,
     Aisi = 2,
+    PureNative = 3,
 }
 
 internal enum DecoderPreference : uint
@@ -29,7 +30,7 @@ internal sealed class DeviceCaptureState
     internal double Volume { get; set; } = 100;
     internal uint AdvancedUsbWidth { get; set; }
     internal uint AdvancedUsbHeight { get; set; }
-    internal UsbProjectionMode UsbProjectionMode { get; set; } = UsbProjectionMode.Demo;
+    internal UsbProjectionMode UsbProjectionMode { get; set; } = UsbProjectionMode.NativeAdaptive;
     internal DecoderPreference DecoderPreference { get; set; } = DecoderPreference.Auto;
     internal double Brightness { get; set; }
     internal double Contrast { get; set; } = 100;
