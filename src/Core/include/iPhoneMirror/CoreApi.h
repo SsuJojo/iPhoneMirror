@@ -207,7 +207,8 @@ struct AudioPacketInfo {
 // Versioned capture preferences used by im_start_capture_with_options.
 // requested_width/requested_height are local preview-render limits. The first
 // Reserved words 0/1 are the optional advanced USB HPD1 size. Reserved word 2
-// selects USB projection mode (0=demo, 1=AirPlay, 2=Aisi-compatible), word 3
+// selects USB projection mode (0=demo, 1=native adaptive, 2=Aisi-compatible,
+// 3=pure native experimental), word 3
 // selects decoder policy (0=auto, 1=hardware preferred, 2=software compatible),
 // and word 4 selects color output (0=auto, 1=SDR tone-map, 2=prefer HDR).
 struct CaptureOptions {
