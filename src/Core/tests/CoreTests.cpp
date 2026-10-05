@@ -589,44 +589,55 @@ void test_usb_projection_modes() {
 
     const auto demo = make_usb_display_configuration(
         UsbProjectionMode::Demo, 1206, 2622);
-    check(demo.session_options.demo_mode, "demo mode enables Valeria");
+    check(demo.session_options.demo_mode, "demo compatibility enables Valeria");
     check(!demo.session_options.request_native_display_size,
-        "demo mode includes a native DisplaySize to start video");
+        "demo compatibility includes a native DisplaySize to start video");
     check(demo.session_options.requested_width == 1206 &&
         demo.session_options.requested_height == 2622,
-        "demo mode requests native portrait dimensions");
+        "demo compatibility requests native portrait dimensions");
     check(!demo.adaptive_reconfiguration,
-        "demo mode does not run AirPlay display reconfiguration");
+        "demo compatibility does not run adaptive display reconfiguration");
     const auto demo_hpd1 = initial_hpd1(demo.session_options);
     check(contains_ascii(demo_hpd1, "Valeria"), "demo HPD1 contains Valeria");
     check(contains_ascii(demo_hpd1, "DisplaySize"),
         "demo HPD1 contains the native DisplaySize required for video");
 
-    const auto airplay = make_usb_display_configuration(
-        UsbProjectionMode::AirPlay, 1206, 2622);
-    check(!airplay.session_options.demo_mode, "AirPlay mode disables Valeria");
-    check(airplay.session_options.requested_width == 1206 &&
-        airplay.session_options.requested_height == 2622,
-        "AirPlay mode requests native portrait dimensions");
-    check(airplay.adaptive_reconfiguration,
-        "AirPlay mode enables adaptive display reconfiguration");
-    check(contains_ascii(initial_hpd1(airplay.session_options), "DisplaySize"),
-        "AirPlay HPD1 contains DisplaySize");
+    const auto native = make_usb_display_configuration(
+        UsbProjectionMode::NativeAdaptive, 1206, 2622);
+    check(!native.session_options.demo_mode, "native mirror disables Valeria");
+    check(native.session_options.requested_width == 1206 &&
+        native.session_options.requested_height == 2622,
+        "native mirror requests native portrait dimensions");
+    check(native.adaptive_reconfiguration,
+        "native mirror enables adaptive display reconfiguration");
+    check(contains_ascii(initial_hpd1(native.session_options), "DisplaySize"),
+        "native mirror HPD1 contains DisplaySize");
 
-    const auto custom_airplay = make_usb_display_configuration(
-        UsbProjectionMode::AirPlay, 1206, 2622, 1920, 1080);
-    check(custom_airplay.session_options.requested_width == 1920 &&
-        custom_airplay.session_options.requested_height == 1080,
-        "AirPlay mode preserves advanced custom dimensions");
+    const auto custom_native = make_usb_display_configuration(
+        UsbProjectionMode::NativeAdaptive, 1206, 2622, 1920, 1080);
+    check(custom_native.session_options.requested_width == 1920 &&
+        custom_native.session_options.requested_height == 1080,
+        "native mirror preserves advanced custom dimensions");
+
+    const auto pure_native = make_usb_display_configuration(
+        UsbProjectionMode::PureNative, 1206, 2622, 1920, 1080);
+    check(!pure_native.session_options.demo_mode, "pure native disables Valeria");
+    check(pure_native.session_options.requested_width == 1206 &&
+        pure_native.session_options.requested_height == 2622,
+        "pure native always uses device native dimensions");
+    check(!pure_native.adaptive_reconfiguration,
+        "pure native never performs follow-up display reconfiguration");
+    check(contains_ascii(initial_hpd1(pure_native.session_options), "DisplaySize"),
+        "pure native HPD1 contains the native DisplaySize");
 
     const auto aisi = make_usb_display_configuration(
         UsbProjectionMode::Aisi, 1206, 2622, 1920, 1080);
-    check(!aisi.session_options.demo_mode, "Aisi mode disables Valeria");
+    check(!aisi.session_options.demo_mode, "Aisi compatibility disables Valeria");
     check(aisi.session_options.requested_width == 1565 &&
         aisi.session_options.requested_height == 1565,
-        "Aisi mode uses its fixed square display target");
+        "Aisi compatibility uses its fixed square display target");
     check(!aisi.adaptive_reconfiguration,
-        "Aisi mode keeps the fixed target during orientation changes");
+        "Aisi compatibility keeps the fixed target during orientation changes");
 }
 
 void test_libusb_runtime() {
