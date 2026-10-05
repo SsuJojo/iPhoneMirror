@@ -345,7 +345,9 @@ std::optional<AdapterPreference> adapter_preference(
         .index = index,
         .metric = metric,
         .type_rank = type_rank,
-        .requested = index == requested && !virtual_adapter,
+        // A vEthernet external switch is virtual in name but can be the actual
+        // LAN interface exposed to Windows. Honor an explicit request for it.
+        .requested = index == requested,
         .non_virtual = !virtual_adapter,
         .physical = physical,
         .gateway = adapter->FirstGatewayAddress != nullptr,
