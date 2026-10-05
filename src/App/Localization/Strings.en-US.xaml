@@ -538,23 +538,27 @@
     <system:String x:Key="AdvancedModeEnabled">Advanced mode enabled</system:String>
     <system:String x:Key="AdvancedModeDisabled">Advanced mode disabled; normal presets restored</system:String>
     <system:String x:Key="UsbProjectionModeTitle">USB mirroring protocol</system:String>
-    <system:String x:Key="UsbModeDemoLabel">A Demo (recommended)</system:String>
-    <system:String x:Key="UsbModeAirPlayLabel">B AirPlay (experimental)</system:String>
-    <system:String x:Key="UsbModeAisiLabel">C Aisi mode</system:String>
+    <system:String x:Key="UsbModeNativeLabel">A Native mirror (recommended)</system:String>
+    <system:String x:Key="UsbModePureNativeLabel">B Pure native (experimental)</system:String>
+    <system:String x:Key="UsbModeDemoLabel">C Demo compatibility</system:String>
+    <system:String x:Key="UsbModeAisiLabel">D Aisi compatibility</system:String>
     <system:String x:Key="UsbProjectionPerDeviceHint">Applies only to the currently selected USB device.</system:String>
     <system:String x:Key="UsbModeDetailsToolTip">View this mode's advantages and disadvantages</system:String>
     <system:String x:Key="UsbModeDetailsTitle">USB mirroring mode details</system:String>
     <system:String x:Key="UsbModeAdvantageTitle">Advantages</system:String>
     <system:String x:Key="UsbModeDisadvantageTitle">Disadvantages</system:String>
-    <system:String x:Key="UsbModeDemoAdvantage">Sends Valeria=true with the device's native DisplaySize, letting iOS provide a complete phone mirror while remaining in demonstration state. It offers the best compatibility and framing and is recommended for everyday use.</system:String>
+    <system:String x:Key="UsbModeNativeAdvantage">Sends Valeria=false at the device's native size and keeps first-frame probing, orientation detection, and adaptive HPD0/HPD1 reconfiguration. It preserves the real iOS status bar while retaining robust framing.</system:String>
+    <system:String x:Key="UsbModeNativeDisadvantage">Adaptive display renegotiation is reverse-engineered. Some device or iOS combinations may crop, rescale, or briefly reconnect during rotation or external-content changes.</system:String>
+    <system:String x:Key="UsbModeNativeNotice">This is the default USB mirroring path. Advanced custom HPD1 sizing is available only in this mode.</system:String>
+    <system:String x:Key="UsbModePureNativeAdvantage">Sends Valeria=false with the device's native DisplaySize and never performs follow-up HPD0/HPD1 display reconfiguration. It is the closest test path to mirroring exactly what the phone shows.</system:String>
+    <system:String x:Key="UsbModePureNativeDisadvantage">This path is not yet verified across the device matrix. Rotation or some iOS versions may crop, letterbox, stall, or fail to recover because no adaptive renegotiation is performed.</system:String>
+    <system:String x:Key="UsbModePureNativeNotice">Compare this mode with Native mirror on the same device. If framing or rotation breaks, switch back to Native mirror.</system:String>
+    <system:String x:Key="UsbModeDemoAdvantage">Sends Valeria=true with the device's native DisplaySize and avoids follow-up display reconfiguration. This is retained as a high-compatibility fallback.</system:String>
     <system:String x:Key="UsbModeDemoDisadvantage">iOS enters Apple's demonstration state. The status-bar date, time, and battery are locked to demonstration values instead of the phone's current state.</system:String>
-    <system:String x:Key="UsbModeDemoNotice">This mode does not enable AirPlay or external playback from video apps.</system:String>
-    <system:String x:Key="UsbModeAirPlayAdvantage">Sends Valeria=false, uses the device's native size, and retains first-frame probing, orientation detection, and adaptive reconfiguration. Video apps can switch to AirPlay or external playback.</system:String>
-    <system:String x:Key="UsbModeAirPlayDisadvantage">External-content resolution cannot be guaranteed to adapt perfectly to both the phone and the window. Content may be cropped, use the wrong aspect ratio, or be partly off-screen.</system:String>
-    <system:String x:Key="UsbModeAirPlayNotice">For custom sizing, click the version in the lower-right corner five times to enable Advanced mode. Custom HPD1 dimensions are risky and can cause a black screen, cropping, or failed USB reconnection.</system:String>
+    <system:String x:Key="UsbModeDemoNotice">Use this compatibility mode if Native mirror or Pure native fails. It does not enable AirPlay or external playback from video apps.</system:String>
     <system:String x:Key="UsbModeAisiAdvantage">Uses an Aisi-style configuration with Valeria=false and a fixed 1565×1565 request, reducing display-negotiation differences between devices.</system:String>
     <system:String x:Key="UsbModeAisiDisadvantage">The square target limits source clarity and is unsuitable when image quality is the priority. Landscape content may also be scaled, letterboxed, or shown at an imperfect ratio.</system:String>
-    <system:String x:Key="UsbModeAisiNotice">This mode does not use this application's native-resolution probing or adaptive orientation reconfiguration.</system:String>
+    <system:String x:Key="UsbModeAisiNotice">Use this as a fixed-size compatibility fallback. It does not use native-resolution probing or adaptive orientation reconfiguration.</system:String>
     <system:String x:Key="UsbProjectionModeSelectedFormat">Selected: {0}</system:String>
     <system:String x:Key="UsbProjectionModeRestarting">Reconnecting the current USB device with the new mode…</system:String>
     <system:String x:Key="UsbProjectionModeAppliedFormat">Applied: {0}</system:String>
