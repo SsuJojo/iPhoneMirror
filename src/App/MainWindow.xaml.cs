@@ -2623,9 +2623,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _isWindowMaximized = true;
         ApplyWindowFramePolicy();
         _ = SetWindowPos(handle, 0,
-            monitorInfo.Monitor.Left, monitorInfo.Monitor.Top,
-            monitorInfo.Monitor.Right - monitorInfo.Monitor.Left,
-            monitorInfo.Monitor.Bottom - monitorInfo.Monitor.Top,
+            monitorInfo.WorkArea.Left, monitorInfo.WorkArea.Top,
+            monitorInfo.WorkArea.Right - monitorInfo.WorkArea.Left,
+            monitorInfo.WorkArea.Bottom - monitorInfo.WorkArea.Top,
             SwpNoZOrder | SwpFrameChanged | SwpShowWindow);
     }
 
