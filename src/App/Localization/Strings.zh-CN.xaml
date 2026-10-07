@@ -838,6 +838,8 @@
     <system:String x:Key="NavCollapseDescription">收起导航</system:String>
     <system:String x:Key="NavExpandToolTip">展开左侧导航</system:String>
     <system:String x:Key="AppPreferencesTitle">应用设置</system:String>
+    <system:String x:Key="RememberLastStartupInterface">记住上次启动界面</system:String>
+    <system:String x:Key="RememberLastStartupInterfaceHelp">下次启动时恢复左侧面板和右侧设置面板的展开状态。</system:String>
     <system:String x:Key="InstanceConflictTitle">iPhoneMirror 已在运行</system:String>
     <system:String x:Key="InstanceConflictBody">检测到另一个 iPhoneMirror 程序正在运行。请选择要保留的窗口。</system:String>
     <system:String x:Key="InstanceConflictHint">关闭其他窗口后，当前窗口会继续启动；关闭当前窗口不会影响已经运行的投屏。</system:String>

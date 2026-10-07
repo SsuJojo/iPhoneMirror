@@ -838,6 +838,8 @@
     <system:String x:Key="NavCollapseDescription">Collapse navigation</system:String>
     <system:String x:Key="NavExpandToolTip">Expand left navigation</system:String>
     <system:String x:Key="AppPreferencesTitle">App settings</system:String>
+    <system:String x:Key="RememberLastStartupInterface">Remember last startup layout</system:String>
+    <system:String x:Key="RememberLastStartupInterfaceHelp">Restore the left workspace and right settings panel to their previous open or closed state at startup.</system:String>
     <system:String x:Key="InstanceConflictTitle">iPhoneMirror is already running</system:String>
     <system:String x:Key="InstanceConflictBody">Another iPhoneMirror instance is currently running. Choose which window to keep.</system:String>
     <system:String x:Key="InstanceConflictHint">Closing the other windows continues this launch. Closing this window leaves active mirroring sessions untouched.</system:String>

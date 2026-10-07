@@ -2082,6 +2082,14 @@
                                     <ComboBoxItem Tag="{x:Static updater:ApplicationDisplayMode.Tray}"
                                                   Content="{DynamicResource ApplicationModeTray}"/>
                                 </ComboBox>
+                                <CheckBox Content="{DynamicResource RememberLastStartupInterface}"
+                                          IsChecked="{Binding RememberLastStartupInterface, Mode=TwoWay}"
+                                          Margin="0,10,0,0"
+                                          AutomationProperties.AutomationId="RememberLastStartupInterfaceCheckBox"/>
+                                <TextBlock Text="{DynamicResource RememberLastStartupInterfaceHelp}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="{DynamicResource CaptionFontSize}"
+                                           TextWrapping="Wrap" Margin="26,3,0,0"/>
                                 <TextBlock Text="{DynamicResource LanguageToolTip}"
                                            Style="{StaticResource DetailLabel}" Margin="0,10,0,5"/>
                                 <ComboBox AutomationProperties.Name="{DynamicResource LanguageToolTip}" x:Name="LanguageComboBox" MinHeight="40"

@@ -29,6 +29,9 @@ internal sealed class UpdateSettings
     public AppTheme Theme { get; set; } = AppTheme.System;
     public ApplicationDisplayMode ApplicationDisplayMode { get; set; } =
         ApplicationDisplayMode.Complete;
+    public bool RememberLastStartupInterface { get; set; } = true;
+    public string LastLeftWorkspacePanel { get; set; } = "devices";
+    public bool LastSettingsPanelVisible { get; set; }
     public WirelessReceiverBackend WirelessReceiverBackend { get; set; } =
         WirelessReceiverBackend.Original;
     public string WirelessDisplayProfileId { get; set; } = "1080p";
@@ -108,6 +111,9 @@ internal sealed class UpdateSettings
         NotifyPrereleaseReleases = NotifyPrereleaseReleases,
         Theme = Theme,
         ApplicationDisplayMode = ApplicationDisplayMode,
+        RememberLastStartupInterface = RememberLastStartupInterface,
+        LastLeftWorkspacePanel = LastLeftWorkspacePanel,
+        LastSettingsPanelVisible = LastSettingsPanelVisible,
         WirelessReceiverBackend = WirelessReceiverBackend,
         WirelessDisplayProfileId = WirelessDisplayProfileId,
         WirelessReceiverName = WirelessReceiverName,
@@ -218,6 +224,19 @@ internal sealed class UpdateSettingsStore
             if (!Enum.IsDefined(settings.ApplicationDisplayMode))
             {
                 settings.ApplicationDisplayMode = ApplicationDisplayMode.Complete;
+                migrationChanged = true;
+            }
+            var normalizedLeftWorkspacePanel = settings.LastLeftWorkspacePanel?
+                .Trim().ToLowerInvariant();
+            if (normalizedLeftWorkspacePanel is not ("none" or "mirroring" or "devices"))
+            {
+                settings.LastLeftWorkspacePanel = "devices";
+                migrationChanged = true;
+            }
+            else if (!string.Equals(settings.LastLeftWorkspacePanel,
+                         normalizedLeftWorkspacePanel, StringComparison.Ordinal))
+            {
+                settings.LastLeftWorkspacePanel = normalizedLeftWorkspacePanel;
                 migrationChanged = true;
             }
             if (!Enum.IsDefined(settings.WirelessReceiverBackend))

@@ -100,6 +100,7 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
         DeviceProtectionStateChanged;
     internal event Action<string>? ProjectionSettingsRequested;
     internal event Action? MediaOutputSettingsRequested;
+    internal event Action? InitialDeviceRefreshCompleted;
     private readonly NativeCore _core;
     private readonly Func<NativeSessionHandle, NativeCaptureStatus> _captureStatusReader;
     private readonly IPhoneFilterDriverService _filterDriver = new();
@@ -419,6 +420,28 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
 
     public bool IsTrayApplicationMode =>
         SelectedApplicationDisplayMode == ApplicationDisplayMode.Tray;
+
+    public bool RememberLastStartupInterface
+    {
+        get => Application.Current is App app &&
+            app.UpdateSettings.RememberLastStartupInterface;
+        set
+        {
+            if (Application.Current is not App app ||
+                app.UpdateSettings.RememberLastStartupInterface == value) return;
+            var previous = app.UpdateSettings.RememberLastStartupInterface;
+            app.UpdateSettings.RememberLastStartupInterface = value;
+            if (!app.SaveUpdateSettings())
+            {
+                app.UpdateSettings.RememberLastStartupInterface = previous;
+                OnPropertyChanged();
+                return;
+            }
+            OnPropertyChanged();
+            AddDiagnosticLog(AppLog.Event("remember_last_startup_interface_changed",
+                ("enabled", value)));
+        }
+    }
 
     private bool CanEnableBluetoothControlFor(string? deviceUdid) =>
         !_bluetoothControlEnabled && !_bluetoothControlStarting &&
@@ -3565,6 +3588,8 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
             if (gateHeld) _coreGate.Release();
             if (forceDeviceEnumeration) Interlocked.Exchange(ref _manualRefreshPending, 0);
         }
+        if (refreshId == 1)
+            InitialDeviceRefreshCompleted?.Invoke();
         await EnableWifiSyncForDetectedDevicesAsync(wifiSyncTargets);
     }
 
