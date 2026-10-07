@@ -18,6 +18,9 @@
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
         Background="{DynamicResource AppBackgroundBrush}"
         Foreground="{DynamicResource TextBrush}"
         PreviewKeyDown="OnPreviewKeyDown"
@@ -914,7 +917,11 @@
                   ClipToBounds="True">
             <Border x:Name="DevicePanel" IsVisibleChanged="OnWorkspacePanelVisibilityChanged" Unloaded="OnWorkspaceUnloaded"
                     Style="{StaticResource WorkspaceCardBorder}" Padding="16">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <!--
+                    Keep the ListBox as the scrolling owner. Wrapping it in another
+                    ScrollViewer gives it effectively unbounded height and disables
+                    container virtualization/recycling.
+                -->
                 <Grid MinHeight="300">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -966,6 +973,14 @@
                     <ListBox x:Name="DeviceListBox" Grid.Row="4" ItemsSource="{Binding Devices}"
                              AutomationProperties.AutomationId="DeviceListBox"
                              SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.CanContentScroll="True"
+                             ScrollViewer.IsDeferredScrollingEnabled="True"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling"
+                             VirtualizingPanel.ScrollUnit="Pixel"
+                             KeyboardNavigation.DirectionalNavigation="Contained"
                              AllowDrop="True"
                              PreviewMouseLeftButtonDown="OnDeviceListLeftButtonDown"
                              PreviewMouseMove="OnDeviceListMouseMove"
@@ -1023,7 +1038,6 @@
                                    FontSize="{DynamicResource CaptionFontSize}" TextAlignment="Center" Margin="0,9,0,0"/>
                     </StackPanel>
                 </Grid>
-                </ScrollViewer>
             </Border>
 
             <Border x:Name="MirroringPanel" IsVisibleChanged="OnWorkspacePanelVisibilityChanged" Unloaded="OnWorkspaceUnloaded"
@@ -1046,7 +1060,11 @@
                             <controls:ThemedSymbolIcon Style="{StaticResource ButtonSymbolIcon}" Symbol="Dismiss20" FontSize="16"/>
                         </Button>
                     </Grid>
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel>
+                    <ScrollViewer Grid.Row="2"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  IsDeferredScrollingEnabled="True"
+                                  PanningMode="VerticalOnly"><StackPanel>
                         <TextBlock Text="{DynamicResource ProjectionSettingsDescription}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    FontSize="{DynamicResource CaptionFontSize}" TextWrapping="Wrap" Margin="0,0,0,14"/>
@@ -1593,7 +1611,10 @@
                 </Border>
 
                 <Border x:Name="StatsPanel" Grid.Row="3" Style="{StaticResource WorkspaceCardBorder}" Padding="0">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  IsDeferredScrollingEnabled="True"
+                                  PanningMode="VerticalOnly"><Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -1670,6 +1691,7 @@
                     ClipToBounds="True">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto"
+                              IsDeferredScrollingEnabled="True"
                               PanningMode="VerticalOnly">
                     <ScrollViewer.Resources>
                         <Style TargetType="ScrollBar"
