@@ -310,6 +310,7 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
         new(UsbProjectionMode.Aisi, "UsbModeAisiLabel", "UsbModeAisiAdvantage",
             "UsbModeAisiDisadvantage", "UsbModeAisiNotice"),
     ];
+    public int UsbProjectionModeColumns => UsbProjectionModes.Count > 3 ? 2 : 3;
     public IReadOnlyList<DecoderPreferenceOption> DecoderPreferences { get; } =
     [
         new(DecoderPreference.Auto, "DecoderAuto"),

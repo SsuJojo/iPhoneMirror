@@ -18,7 +18,7 @@ internal static class RuntimeBinaryIntegrity
             ["avutil-56.dll"] =
                 "85eef85c41cd5661c0ff1f9d78fed41f0f0cbc2bd094eed0449fbb68e710ff0a",
             ["dnssd.dll"] =
-                "003eeb7ea109df21e62d236e24937971bd9738b6648df81f6effb810524d92bd",
+                "be6593efe4e885f5ee9c5ea8b5498167505e3f9d2c7eaadf26b154bb48e06ca4",
             ["swresample-3.dll"] =
                 "7284ddec63d4583faf645edfdea5e101182e476ae18f9584da5f60fb637536c1",
             ["swscale-5.dll"] =
