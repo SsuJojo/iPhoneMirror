@@ -74,6 +74,8 @@
     <Style x:Key="BodyText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="{DynamicResource BodyFontSize}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextHintingMode" Value="Fixed"/>
         <Setter Property="LineHeight" Value="{DynamicResource BodyLineHeight}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
@@ -95,7 +97,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Control">
                     <Border BorderBrush="{DynamicResource FocusStrokeBrush}" BorderThickness="2"
-                            CornerRadius="4" Margin="-2" IsHitTestVisible="False"/>
+                            CornerRadius="6" Margin="-3" IsHitTestVisible="False"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
