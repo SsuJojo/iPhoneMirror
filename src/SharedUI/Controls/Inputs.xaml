@@ -17,6 +17,7 @@
             <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}"/>
             <Setter Property="MinHeight" Value="{StaticResource ControlMinHeight}"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -66,7 +67,10 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="MaxDropDownHeight" Value="260"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
             <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True"/>
         </Style>
 
         <Style TargetType="CheckBox">
@@ -77,6 +81,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FontSize" Value="{DynamicResource BodyFontSize}"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -179,8 +184,8 @@
             </Setter>
         </Style>
         <Style x:Key="SliderThumbStyle" TargetType="{x:Type Thumb}">
-            <Setter Property="Width" Value="16"/>
-            <Setter Property="Height" Value="16"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Thumb}">
@@ -202,8 +207,11 @@
             </Setter>
         </Style>
         <Style TargetType="{x:Type Slider}">
-            <Setter Property="Height" Value="20"/>
+            <Setter Property="Height" Value="28"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Slider}">
