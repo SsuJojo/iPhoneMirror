@@ -326,7 +326,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _activeControlWindow == 0 &&
         _viewModel.IsUsbControlTarget(_viewModel.SelectedDevice?.Udid);
 
-    private static readonly TimeSpan DeviceDragHoldDuration = TimeSpan.FromMilliseconds(350);
+    private static readonly TimeSpan DeviceDragHoldDuration = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan AppSwitcherDoublePressInterval =
         TimeSpan.FromMilliseconds(100);
     public MainWindow()
@@ -5271,11 +5271,15 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var target = item?.DataContext as DeviceViewModel;
         if (target is not null && !ReferenceEquals(source, target))
         {
-            var before = CaptureDeviceItemPositions();
+            // Respect the Windows animation preference and avoid capturing
+            // per-item layout positions when motion is disabled.
+            var before = SystemParameters.ClientAreaAnimation
+                ? CaptureDeviceItemPositions()
+                : null;
             var placeAfter = e.GetPosition(item!).Y >= item!.ActualHeight / 2;
             var oldIndex = _viewModel.Devices.IndexOf(source);
             _viewModel.MoveDevice(source, target, placeAfter);
-            if (_viewModel.Devices.IndexOf(source) != oldIndex)
+            if (before is not null && _viewModel.Devices.IndexOf(source) != oldIndex)
                 AnimateDeviceItemsFrom(before);
         }
         e.Handled = true;
@@ -5320,7 +5324,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             var transform = item.RenderTransform as TranslateTransform ?? new TranslateTransform();
             item.RenderTransform = transform;
             transform.BeginAnimation(TranslateTransform.YProperty,
-                new DoubleAnimation(delta, 0, TimeSpan.FromMilliseconds(170))
+                new DoubleAnimation(delta, 0, TimeSpan.FromMilliseconds(120))
                 { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
         }
     }
