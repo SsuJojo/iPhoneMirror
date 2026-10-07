@@ -189,6 +189,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private string? _lastPlaybackReportError;
     private LeftWorkspacePanel _leftWorkspacePanel = LeftWorkspacePanel.Devices;
     private bool _isSettingsPanelVisible;
+    private bool _suppressInitialDevicePanelAutoOpen;
     private bool _isSynchronizingWorkspacePanelControls;
     private bool _workspaceControlsReady;
     private bool _themeControlReady;
@@ -355,6 +356,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (Application.Current is App app)
         {
             ThemeComboBox.SelectedValue = app.UpdateSettings.Theme.ToString();
+            RestoreWorkspacePanelState(app.UpdateSettings);
+            _suppressInitialDevicePanelAutoOpen =
+                app.UpdateSettings.RememberLastStartupInterface;
             foreach (var action in Enum.GetValues<BluetoothShortcutAction>())
                 _bluetoothShortcuts[action] = KeyboardShortcut.FromSettings(
                     app.UpdateSettings, action);
@@ -390,6 +394,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _viewModel.MediaCastAudioSettingsChanged += OnMediaCastAudioSettingsChanged;
         _viewModel.ProjectionSettingsRequested += OnProjectionSettingsRequested;
         _viewModel.MediaOutputSettingsRequested += OnMediaOutputSettingsRequested;
+        _viewModel.InitialDeviceRefreshCompleted += OnInitialDeviceRefreshCompleted;
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += (_, _) => _ = _viewModel.RefreshAsync();
         _mediaCastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
@@ -2130,6 +2135,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (_leftWorkspacePanel == panel) return;
         _leftWorkspacePanel = panel;
         ApplyWorkspacePanelState(animate: IsLoaded && !_isFullScreen);
+        PersistWorkspacePanelState();
         _viewModel.AddDiagnosticLog(AppLog.Event("workspace_left_panel_changed",
             ("panel", panel.ToString().ToLowerInvariant())));
     }
@@ -2139,8 +2145,38 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (_isSettingsPanelVisible == visible) return;
         _isSettingsPanelVisible = visible;
         ApplyWorkspacePanelState(animate: IsLoaded && !_isFullScreen);
+        PersistWorkspacePanelState();
         _viewModel.AddDiagnosticLog(AppLog.Event("workspace_settings_panel_changed",
             ("visible", visible)));
+    }
+
+    private void RestoreWorkspacePanelState(UpdateSettings settings)
+    {
+        if (!settings.RememberLastStartupInterface) return;
+        _leftWorkspacePanel = settings.LastLeftWorkspacePanel?.Trim().ToLowerInvariant() switch
+        {
+            "none" => LeftWorkspacePanel.None,
+            "mirroring" => LeftWorkspacePanel.Mirroring,
+            _ => LeftWorkspacePanel.Devices,
+        };
+        _isSettingsPanelVisible = settings.LastSettingsPanelVisible;
+    }
+
+    private void PersistWorkspacePanelState()
+    {
+        if (Application.Current is not App app ||
+            !app.UpdateSettings.RememberLastStartupInterface) return;
+        app.UpdateSettings.LastLeftWorkspacePanel =
+            _leftWorkspacePanel.ToString().ToLowerInvariant();
+        app.UpdateSettings.LastSettingsPanelVisible = _isSettingsPanelVisible;
+        if (!app.SaveUpdateSettings())
+            _viewModel.AddDiagnosticLog(AppLog.Event(
+                "workspace_startup_state_save_failed"));
+    }
+
+    private void OnInitialDeviceRefreshCompleted()
+    {
+        _suppressInitialDevicePanelAutoOpen = false;
     }
 
     private void ApplyWorkspacePanelState(bool animate = false)
@@ -2602,6 +2638,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _viewModel.MediaCastAudioSettingsChanged -= OnMediaCastAudioSettingsChanged;
         _viewModel.ProjectionSettingsRequested -= OnProjectionSettingsRequested;
         _viewModel.MediaOutputSettingsRequested -= OnMediaOutputSettingsRequested;
+        _viewModel.InitialDeviceRefreshCompleted -= OnInitialDeviceRefreshCompleted;
+        PersistWorkspacePanelState();
         _refreshTimer.Stop();
         _mediaCastTimer.Stop();
         var application = Application.Current;
@@ -6312,7 +6350,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         // A source panel is useful once there is a choice. Open it exactly
         // when a new source is added; refreshes and removals must not override
         // the user's current panel choice.
-        if (e.Action != NotifyCollectionChangedAction.Add ||
+        if (_suppressInitialDevicePanelAutoOpen ||
+            e.Action != NotifyCollectionChangedAction.Add ||
             e.NewItems is null || e.NewItems.Count == 0 || _viewModel.Devices.Count <= 1 ||
             _leftWorkspacePanel == LeftWorkspacePanel.Devices)
             return;
