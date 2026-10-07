@@ -26,29 +26,23 @@
             <Setter Property="Background" Value="{DynamicResource BorderSoftBrush}"/>
         </Style>
 
+        <!--
+            Workspace cards sit next to a continuously rendered D3D preview. Avoid
+            WPF DropShadowEffect here: it forces extra off-screen composition work on
+            every invalidation and is especially noticeable while panels resize.
+            Border + surface contrast keeps the hierarchy without a software shadow.
+        -->
         <Style x:Key="CardBorder" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource CardCornerRadius}"/>
             <Setter Property="Padding" Value="{StaticResource CardPadding}"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="18" ShadowDepth="3" Direction="270"
-                                      Color="{DynamicResource CardShadowColor}" Opacity="0.14"/>
-                </Setter.Value>
-            </Setter>
         </Style>
         <Style x:Key="WorkspaceCardBorder" TargetType="Border"
                BasedOn="{StaticResource CardBorder}">
             <Setter Property="Background" Value="{DynamicResource WorkspaceCardBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderSoftBrush}"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270"
-                                      Color="{DynamicResource CardShadowColor}" Opacity="0.1"/>
-                </Setter.Value>
-            </Setter>
         </Style>
         <Style x:Key="DeviceContextMenuStyle" TargetType="ContextMenu">
             <Setter Property="Background" Value="{DynamicResource PanelRaisedBrush}"/>
