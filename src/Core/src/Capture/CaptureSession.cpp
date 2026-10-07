@@ -741,7 +741,7 @@ UsbDisplayConfiguration make_usb_display_configuration(UsbProjectionMode mode,
         options.requested_width = native_width;
         options.requested_height = native_height;
         break;
-    case UsbProjectionMode::AirPlay:
+    case UsbProjectionMode::NativeAdaptive:
         options.demo_mode = false;
         options.requested_width = requested_width != 0 ? requested_width : native_width;
         options.requested_height = requested_height != 0 ? requested_height : native_height;
@@ -751,6 +751,11 @@ UsbDisplayConfiguration make_usb_display_configuration(UsbProjectionMode mode,
         options.demo_mode = false;
         options.requested_width = 1565;
         options.requested_height = 1565;
+        break;
+    case UsbProjectionMode::PureNative:
+        options.demo_mode = false;
+        options.requested_width = native_width;
+        options.requested_height = native_height;
         break;
     }
     return configuration;
@@ -1165,14 +1170,15 @@ void CaptureSession::run(std::stop_token stop_token) noexcept {
     // Always negotiate the audio stream. The playback toggle is deliberately
     // local so it can be switched on again without restarting USB/QuickTime.
     session_options.request_audio = true;
-    if (preferences_.usb_projection_mode == UsbProjectionMode::AirPlay &&
+    if (preferences_.usb_projection_mode == UsbProjectionMode::NativeAdaptive &&
         preferences_.usb_requested_width != 0 && preferences_.usb_requested_height != 0) {
         logging::write(std::format("advanced_usb_request={}x{}",
             preferences_.usb_requested_width, preferences_.usb_requested_height));
     }
     const char* projection_mode = preferences_.usb_projection_mode == UsbProjectionMode::Demo
-        ? "demo" : preferences_.usb_projection_mode == UsbProjectionMode::AirPlay
-        ? "airplay" : "aisi";
+        ? "demo" : preferences_.usb_projection_mode == UsbProjectionMode::NativeAdaptive
+        ? "native_adaptive" : preferences_.usb_projection_mode == UsbProjectionMode::PureNative
+        ? "pure_native" : "aisi";
     logging::write(std::format(
         "usb_projection mode={} valeria={} native_size={} display_size={}x{} adaptive={}",
         projection_mode, session_options.demo_mode,

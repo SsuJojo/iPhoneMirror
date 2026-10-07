@@ -51,8 +51,9 @@ enum class FailureStage : std::int32_t {
 
 enum class UsbProjectionMode : std::uint32_t {
     Demo = 0,
-    AirPlay = 1,
+    NativeAdaptive = 1,
     Aisi = 2,
+    PureNative = 3,
 };
 
 struct Snapshot {
@@ -87,7 +88,7 @@ struct CapturePreferences {
     float audio_volume{1.0F};
     std::uint32_t usb_requested_width{};
     std::uint32_t usb_requested_height{};
-    UsbProjectionMode usb_projection_mode{UsbProjectionMode::Demo};
+    UsbProjectionMode usb_projection_mode{UsbProjectionMode::NativeAdaptive};
     media::DecoderPreference decoder_preference{media::DecoderPreference::Auto};
     media::ColorOutputPreference color_output_preference{
         media::ColorOutputPreference::ForceSdrToneMap};

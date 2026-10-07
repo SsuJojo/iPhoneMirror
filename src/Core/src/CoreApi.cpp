@@ -438,7 +438,7 @@ bool valid_image_adjustments(float brightness, float contrast,
 }
 
 bool valid_capture_option_extensions(const iPhoneMirror::CaptureOptions& options) noexcept {
-    return options.reserved[2] <= 2 && options.reserved[3] <= 2 &&
+    return options.reserved[2] <= 3 && options.reserved[3] <= 2 &&
         options.reserved[4] <= 2 &&
         valid_video_preferences(options.reserved[0], options.reserved[1], 0);
 }

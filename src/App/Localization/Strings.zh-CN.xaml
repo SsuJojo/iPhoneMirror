@@ -538,23 +538,27 @@
     <system:String x:Key="AdvancedModeEnabled">高级模式已开启</system:String>
     <system:String x:Key="AdvancedModeDisabled">高级模式已关闭，恢复普通预设</system:String>
     <system:String x:Key="UsbProjectionModeTitle">有线投屏协议</system:String>
-    <system:String x:Key="UsbModeDemoLabel">A 演示模式（推荐）</system:String>
-    <system:String x:Key="UsbModeAirPlayLabel">B AirPlay（实验）</system:String>
-    <system:String x:Key="UsbModeAisiLabel">C 爱思模式</system:String>
+    <system:String x:Key="UsbModeNativeLabel">A 原生镜像（推荐）</system:String>
+    <system:String x:Key="UsbModePureNativeLabel">B 纯原生（实验）</system:String>
+    <system:String x:Key="UsbModeDemoLabel">C 演示兼容</system:String>
+    <system:String x:Key="UsbModeAisiLabel">D 爱思兼容</system:String>
     <system:String x:Key="UsbProjectionPerDeviceHint">仅应用于当前选中的有线设备。</system:String>
     <system:String x:Key="UsbModeDetailsToolTip">查看该模式的优缺点</system:String>
     <system:String x:Key="UsbModeDetailsTitle">有线投屏模式说明</system:String>
     <system:String x:Key="UsbModeAdvantageTitle">优点</system:String>
     <system:String x:Key="UsbModeDisadvantageTitle">缺点</system:String>
-    <system:String x:Key="UsbModeDemoAdvantage">发送 Valeria=true 和设备原生 DisplaySize，由 iOS 输出完整的手机镜像，并保持固定演示状态。兼容性和画面完整性最高，推荐日常使用。</system:String>
+    <system:String x:Key="UsbModeNativeAdvantage">发送 Valeria=false 和设备原生尺寸，保留首帧探测、横竖屏识别以及 HPD0/HPD1 自适应重配。可以保留真实 iOS 状态栏，同时尽量维持完整画面。</system:String>
+    <system:String x:Key="UsbModeNativeDisadvantage">自适应显示重协商来自逆向实现，部分设备或 iOS 版本在旋转或外接内容切换时仍可能出现裁切、缩放或短暂重连。</system:String>
+    <system:String x:Key="UsbModeNativeNotice">这是默认 USB 镜像路径。高级模式中的自定义 HPD1 尺寸仅在此模式可用。</system:String>
+    <system:String x:Key="UsbModePureNativeAdvantage">发送 Valeria=false 和设备原生 DisplaySize，之后完全不执行 HPD0/HPD1 显示重配，是最接近“手机显示什么，电脑就镜像什么”的测试路径。</system:String>
+    <system:String x:Key="UsbModePureNativeDisadvantage">该路径尚未覆盖完整真机矩阵。由于不做自适应重协商，旋转或部分 iOS 版本可能出现裁切、黑边、卡流或无法自动恢复。</system:String>
+    <system:String x:Key="UsbModePureNativeNotice">建议在同一台设备上与“原生镜像”对比测试；如果横竖屏或画面完整性异常，请切回原生镜像。</system:String>
+    <system:String x:Key="UsbModeDemoAdvantage">发送 Valeria=true 和设备原生 DisplaySize，且不进行后续显示重配。作为兼容性较高的回退方案保留。</system:String>
     <system:String x:Key="UsbModeDemoDisadvantage">iOS 会进入 Apple 演示状态，状态栏日期、时间和电量会锁定为演示值，不能反映手机当前状态。</system:String>
-    <system:String x:Key="UsbModeDemoNotice">此模式不会启用视频 App 的 AirPlay 或外接播放画面。</system:String>
-    <system:String x:Key="UsbModeAirPlayAdvantage">发送 Valeria=false，使用设备原生尺寸，并保留当前的首帧探测、横竖屏识别和自适应重配。视频 App 可以切换到 AirPlay 或外接播放。</system:String>
-    <system:String x:Key="UsbModeAirPlayDisadvantage">外接内容的分辨率无法保证与手机和窗口完美自适应，可能出现裁切、比例异常或画面显示不全。</system:String>
-    <system:String x:Key="UsbModeAirPlayNotice">需要自定义时，连续点击右下角版本号 5 次开启高级模式。自定义 HPD1 尺寸存在风险，错误参数可能导致黑屏、裁切或 USB 重连失败。</system:String>
+    <system:String x:Key="UsbModeDemoNotice">当原生镜像或纯原生异常时可使用此兼容模式；它不会启用视频 App 的 AirPlay 或外接播放画面。</system:String>
     <system:String x:Key="UsbModeAisiAdvantage">采用爱思同类方案，发送 Valeria=false 并固定请求 1565×1565，减少不同设备之间的分辨率协商差异。</system:String>
     <system:String x:Key="UsbModeAisiDisadvantage">方形目标会限制源画面的清晰度，不适合画质优先；横屏内容还可能出现缩放、黑边或比例不理想。</system:String>
-    <system:String x:Key="UsbModeAisiNotice">此模式不会使用本项目的原生分辨率探测和横竖屏自适应重配。</system:String>
+    <system:String x:Key="UsbModeAisiNotice">作为固定尺寸兼容回退使用；此模式不会使用原生分辨率探测和横竖屏自适应重配。</system:String>
     <system:String x:Key="UsbProjectionModeSelectedFormat">已选择：{0}</system:String>
     <system:String x:Key="UsbProjectionModeRestarting">正在按新模式重新连接当前有线设备…</system:String>
     <system:String x:Key="UsbProjectionModeAppliedFormat">已应用：{0}</system:String>

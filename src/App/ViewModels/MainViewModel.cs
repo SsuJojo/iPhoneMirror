@@ -300,10 +300,12 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
         WirelessReceiverConfiguration.BackendOptions;
     public IReadOnlyList<UsbProjectionModeOption> UsbProjectionModes { get; } =
     [
+        new(UsbProjectionMode.NativeAdaptive, "UsbModeNativeLabel", "UsbModeNativeAdvantage",
+            "UsbModeNativeDisadvantage", "UsbModeNativeNotice"),
+        new(UsbProjectionMode.PureNative, "UsbModePureNativeLabel", "UsbModePureNativeAdvantage",
+            "UsbModePureNativeDisadvantage", "UsbModePureNativeNotice"),
         new(UsbProjectionMode.Demo, "UsbModeDemoLabel", "UsbModeDemoAdvantage",
             "UsbModeDemoDisadvantage", "UsbModeDemoNotice"),
-        new(UsbProjectionMode.AirPlay, "UsbModeAirPlayLabel", "UsbModeAirPlayAdvantage",
-            "UsbModeAirPlayDisadvantage", "UsbModeAirPlayNotice"),
         new(UsbProjectionMode.Aisi, "UsbModeAisiLabel", "UsbModeAisiAdvantage",
             "UsbModeAisiDisadvantage", "UsbModeAisiNotice"),
     ];
@@ -626,7 +628,7 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
         ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AdvancedSettingsVisibility => IsAdvancedMode && !IsWirelessSelected &&
         !IsMediaCastSelected &&
-        CurrentUsbProjectionMode == UsbProjectionMode.AirPlay
+        CurrentUsbProjectionMode == UsbProjectionMode.NativeAdaptive
         ? Visibility.Visible : Visibility.Collapsed;
 
     public DeviceViewModel? SelectedDevice
@@ -924,7 +926,7 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
     }
 
     private UsbProjectionMode CurrentUsbProjectionMode =>
-        CurrentDeviceSession?.UsbProjectionMode ?? UsbProjectionMode.Demo;
+        CurrentDeviceSession?.UsbProjectionMode ?? UsbProjectionMode.NativeAdaptive;
 
     public UsbProjectionModeOption? SelectedUsbProjectionMode
     {
