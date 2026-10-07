@@ -285,7 +285,7 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="ScrollThumb"
                                                          Storyboard.TargetProperty="Width"
-                                                         To="4" Duration="0:0:0.12">
+                                                         To="4" Duration="0:0:0">
                                             <DoubleAnimation.EasingFunction>
                                                 <QuadraticEase EasingMode="EaseOut"/>
                                             </DoubleAnimation.EasingFunction>
@@ -298,7 +298,7 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="ScrollThumb"
                                                          Storyboard.TargetProperty="Width"
-                                                         To="2" Duration="0:0:0.18">
+                                                         To="2" Duration="0:0:0">
                                             <DoubleAnimation.EasingFunction>
                                                 <QuadraticEase EasingMode="EaseOut"/>
                                             </DoubleAnimation.EasingFunction>
@@ -317,7 +317,7 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="ScrollThumb"
                                                          Storyboard.TargetProperty="Height"
-                                                         To="4" Duration="0:0:0.12">
+                                                         To="4" Duration="0:0:0">
                                             <DoubleAnimation.EasingFunction>
                                                 <QuadraticEase EasingMode="EaseOut"/>
                                             </DoubleAnimation.EasingFunction>
@@ -330,7 +330,7 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="ScrollThumb"
                                                          Storyboard.TargetProperty="Height"
-                                                         To="2" Duration="0:0:0.18">
+                                                         To="2" Duration="0:0:0">
                                             <DoubleAnimation.EasingFunction>
                                                 <QuadraticEase EasingMode="EaseOut"/>
                                             </DoubleAnimation.EasingFunction>
@@ -406,9 +406,10 @@
     </Style>
 
     <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Width" Value="40"/>
-        <Setter Property="Height" Value="40"/>
-        <Setter Property="MinHeight" Value="40"/>
+        <!-- Keep common icon actions at a comfortable pointer/touch target size. -->
+        <Setter Property="Width" Value="44"/>
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="MinHeight" Value="44"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -689,7 +690,7 @@
         <Setter Property="RenderTransform"><Setter.Value><ScaleTransform/></Setter.Value></Setter>
         <Style.Triggers>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.96" ScaleY="0.96"/></Setter.Value></Setter>
+                <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.98" ScaleY="0.98"/></Setter.Value></Setter>
             </Trigger>
             <Trigger Property="IsLoading" Value="True">
                 <Setter Property="IsHitTestVisible" Value="False"/>
@@ -703,7 +704,6 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="{StaticResource CardPadding}"/>
-        <Setter Property="RenderTransform"><Setter.Value><TranslateTransform/></Setter.Value></Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ui:ModernCard">
@@ -711,10 +711,6 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="16" Padding="{TemplateBinding Padding}">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="18" ShadowDepth="3" Direction="270"
-                                              Color="{DynamicResource CardShadowColor}" Opacity="0.14"/>
-                        </Border.Effect>
                         <ContentPresenter/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -725,15 +721,8 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Card" Property="Background"
                                     Value="{DynamicResource CardHoverBrush}"/>
-                            <Setter TargetName="Card" Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect BlurRadius="24" ShadowDepth="5" Direction="270"
-                                                      Color="{DynamicResource CardShadowColor}" Opacity="0.2"/>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter Property="RenderTransform">
-                                <Setter.Value><TranslateTransform Y="-3"/></Setter.Value>
-                            </Setter>
+                            <Setter TargetName="Card" Property="BorderBrush"
+                                    Value="{DynamicResource ComboBorderHoverBrush}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
