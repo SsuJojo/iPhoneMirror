@@ -43,6 +43,9 @@
     <EmbeddedResource Include="native\components\ffmpeg.sha256"
                       LogicalName="IPhoneMirror.App.Components.Ffmpeg.sha256"
                       Condition="Exists('native\components\ffmpeg.sha256')" />
+    <EmbeddedResource Include="native\components\wireless-dnssd.sha256"
+                      LogicalName="IPhoneMirror.App.Components.DnsSd.sha256"
+                      Condition="Exists('native\components\wireless-dnssd.sha256')" />
     <Content Include="$(UsbBridgeRoot)\iUsbBridge.exe">
       <Link>tools\iUsbBridge.exe</Link>
       <TargetPath>tools\iUsbBridge.exe</TargetPath>
@@ -230,9 +233,17 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
-    <Content Include="..\..\third_party\airplay-server\LICENSE-*;..\..\third_party\airplay-server\NOTICE-*;..\..\third_party\airplay-server\SOURCE.md;..\..\third_party\airplay-server\SHA256SUMS.txt">
+    <Content Include="..\..\third_party\airplay-server\LICENSE-*;..\..\third_party\airplay-server\NOTICE-*;..\..\third_party\airplay-server\SOURCE.md">
       <Link>Wireless\licenses\%(Filename)%(Extension)</Link>
       <TargetPath>Wireless\licenses\%(Filename)%(Extension)</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Include="native\Wireless\licenses\SHA256SUMS.txt"
+             Condition="Exists('native\Wireless\licenses\SHA256SUMS.txt')">
+      <Link>Wireless\licenses\SHA256SUMS.txt</Link>
+      <TargetPath>Wireless\licenses\SHA256SUMS.txt</TargetPath>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

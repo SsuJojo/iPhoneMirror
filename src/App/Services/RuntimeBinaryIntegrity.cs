@@ -17,8 +17,6 @@ internal static class RuntimeBinaryIntegrity
                 "4da59c6e58d78bb2b751553d2840421850309d42f1534734543b6854205a65c4",
             ["avutil-56.dll"] =
                 "85eef85c41cd5661c0ff1f9d78fed41f0f0cbc2bd094eed0449fbb68e710ff0a",
-            ["dnssd.dll"] =
-                "003eeb7ea109df21e62d236e24937971bd9738b6648df81f6effb810524d92bd",
             ["swresample-3.dll"] =
                 "7284ddec63d4583faf645edfdea5e101182e476ae18f9584da5f60fb637536c1",
             ["swscale-5.dll"] =
@@ -27,6 +25,8 @@ internal static class RuntimeBinaryIntegrity
 
     private const string FfmpegHash =
         "1326dde4c84ff1f96fe6b8916c5bed29e163e9b5dccf995f6f3db069d143ec5e";
+    private const string OfficialDnsSdHash =
+        "003eeb7ea109df21e62d236e24937971bd9738b6648df81f6effb810524d92bd";
 
     private static readonly Lazy<string> PublishedFfmpegHash = new(() =>
     {
@@ -40,6 +40,18 @@ internal static class RuntimeBinaryIntegrity
         return hash;
     });
 
+    private static readonly Lazy<string> PublishedDnsSdHash = new(() =>
+    {
+        using var stream = typeof(RuntimeBinaryIntegrity).Assembly.GetManifestResourceStream(
+            "IPhoneMirror.App.Components.DnsSd.sha256");
+        if (stream is null) return OfficialDnsSdHash;
+        using var reader = new StreamReader(stream);
+        var hash = reader.ReadToEnd().Trim();
+        if (hash.Length != 64 || !hash.All(Uri.IsHexDigit))
+            throw new InvalidDataException("Invalid embedded DNS-SD integrity metadata.");
+        return hash;
+    });
+
 
     internal static bool VerifyWirelessDirectory(string directory,
         out string failure)
@@ -49,8 +61,8 @@ internal static class RuntimeBinaryIntegrity
             if (!VerifyFile(Path.Combine(directory, name), expected, out failure))
                 return false;
         }
-        failure = string.Empty;
-        return true;
+        return VerifyFile(Path.Combine(directory, "dnssd.dll"), PublishedDnsSdHash.Value,
+            out failure);
     }
 
     internal static bool IsTrustedFfmpeg(string path) =>

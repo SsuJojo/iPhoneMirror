@@ -481,6 +481,7 @@ try {
         $RuntimeIntegrityText = Get-Content -LiteralPath $RuntimeIntegritySource -Raw
         foreach ($entry in $WirelessHashes) {
             $RuntimeName = [IO.Path]::GetFileName($entry.Path)
+            if ($RuntimeName -eq 'dnssd.dll') { continue }
             $RuntimeHashPattern = '(?ms)\["' + [regex]::Escape($RuntimeName) +
                 '"\]\s*=\s*"([0-9a-fA-F]{64})"'
             $RuntimeHashMatches = [regex]::Matches(
@@ -528,6 +529,8 @@ try {
             "build/native/src/VirtualCamera/$Configuration/iPhoneMirror.VirtualCamera.Admin.exe"
         $WirelessHost = Join-Path $Root `
             "build/native/src/WirelessHost/$Configuration/iPhoneMirror.WirelessHost.exe"
+        $DnsSdShim = Join-Path $Root `
+            "build/native/src/WirelessHost/$Configuration/dnssd.dll"
         $UxPlayHost = Join-Path $Root `
             "build/native/src/UxPlayHost/$Configuration/iPhoneMirror.UxPlayHost.exe"
         $DnsSdRuntime = Join-Path $WirelessRoot 'bin\x64\dnssd.dll'
@@ -596,9 +599,32 @@ try {
                     -SourceDirectory $AppUxPlay -Version $Version
             }
         }
-        # Ship the hash-pinned receiver runtime, not the build-local shim. The
-        # latter is compiled for native tests and is not reproducible byte for byte.
-        Copy-Item $DnsSdRuntime (Join-Path $AppWireless 'dnssd.dll') -Force
+        # AirPlayServer's Bonjour runtime omits Windows Mobile Hotspot adapters
+        # on some hosts. Ship the DNS-SD shim built with WirelessHost so an
+        # unconstrained registration publishes on all eligible interfaces.
+        if (-not (Test-Path -LiteralPath $DnsSdShim -PathType Leaf)) {
+            throw "Built DNS-SD shim is missing: $DnsSdShim"
+        }
+        Copy-Item $DnsSdShim (Join-Path $AppWireless 'dnssd.dll') -Force
+        $dnsSdHash = (Get-FileHash -LiteralPath $DnsSdShim -Algorithm SHA256).Hash.ToLowerInvariant()
+        $dnsSdEntry = $WirelessHashes | Where-Object { $_.Path -eq 'bin/x64/dnssd.dll' }
+        if ($null -eq $dnsSdEntry) { throw 'DNS-SD runtime manifest entry is missing.' }
+        $dnsSdEntry.Hash = $dnsSdHash
+        $integrityDirectory = Join-Path $AppNative 'components'
+        $wirelessLicenseDirectory = Join-Path $AppWireless 'licenses'
+        Assert-SafeWorkspaceDirectory $integrityDirectory
+        Assert-SafeWorkspaceDirectory $wirelessLicenseDirectory
+        New-Item -ItemType Directory -Force -Path $integrityDirectory | Out-Null
+        New-Item -ItemType Directory -Force -Path $wirelessLicenseDirectory | Out-Null
+        [IO.File]::WriteAllText(
+            (Join-Path $integrityDirectory 'wireless-dnssd.sha256'),
+            $dnsSdHash, [Text.UTF8Encoding]::new($false))
+        $publishedWirelessHashes = foreach ($entry in $WirelessHashes) {
+            "$($entry.Hash)  $($entry.Path)"
+        }
+        [IO.File]::WriteAllLines(
+            (Join-Path $wirelessLicenseDirectory 'SHA256SUMS.txt'),
+            $publishedWirelessHashes, [Text.UTF8Encoding]::new($false))
         Copy-Item (Join-Path $Root 'third_party/libusb/bin/x64/libusb-1.0.dll') `
             (Join-Path $AppNative 'libusb-1.0.dll') -Force
         if (-not (Test-Path -LiteralPath $PrepareLibUsb0Runtime -PathType Leaf)) {
