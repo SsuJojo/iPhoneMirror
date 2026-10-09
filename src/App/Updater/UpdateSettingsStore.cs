@@ -21,7 +21,8 @@ public enum ApplicationDisplayMode
 internal sealed class UpdateSettings
 {
     public KeyboardMappingSettings KeyboardMapping { get; set; } = new();
-    public bool CheckOnStartup { get; set; } = true;
+    public bool CheckOnStartup { get; set; } = !VersionManager.Current.IsPrerelease;
+    public bool? LastSeenPrereleaseChannel { get; set; }
     public bool AutoDownload { get; set; }
     public bool AllowMirrorFallback { get; set; } = false;
     public bool NotifyStableReleases { get; set; } = true;
@@ -105,6 +106,7 @@ internal sealed class UpdateSettings
     {
         KeyboardMapping = KeyboardMapping.Clone(),
         CheckOnStartup = CheckOnStartup,
+        LastSeenPrereleaseChannel = LastSeenPrereleaseChannel,
         AutoDownload = AutoDownload,
         AllowMirrorFallback = AllowMirrorFallback,
         NotifyStableReleases = NotifyStableReleases,
@@ -217,10 +219,22 @@ internal sealed class UpdateSettingsStore
                 BluetoothShortcutSchema = 6,
                 BluetoothHidReportMapVersion = BluetoothHidProtocol.ReportMapVersion,
                 BluetoothHidReportMapAcknowledgedVersion = BluetoothHidProtocol.ReportMapVersion,
+                LastSeenPrereleaseChannel = VersionManager.Current.IsPrerelease,
             };
             var settings = JsonSerializer.Deserialize<UpdateSettings>(
                 File.ReadAllText(_path), JsonOptions) ?? new UpdateSettings();
             var migrationChanged = false;
+            if (VersionManager.Current.IsPrerelease &&
+                settings.LastSeenPrereleaseChannel != true)
+            {
+                settings.CheckOnStartup = false;
+                migrationChanged = true;
+            }
+            if (settings.LastSeenPrereleaseChannel != VersionManager.Current.IsPrerelease)
+            {
+                settings.LastSeenPrereleaseChannel = VersionManager.Current.IsPrerelease;
+                migrationChanged = true;
+            }
             if (!Enum.IsDefined(settings.ApplicationDisplayMode))
             {
                 settings.ApplicationDisplayMode = ApplicationDisplayMode.Complete;
