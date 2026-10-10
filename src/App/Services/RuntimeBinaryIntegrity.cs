@@ -12,7 +12,7 @@ internal static class RuntimeBinaryIntegrity
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["airplay2dll.dll"] =
-                "4a534dacac5cd36f9aaa6e016db75db899e0678ffb8b0c191cabf230a2002bd9",
+                "ad36019cbd25d5793ea7f2eee5ecfc925938d14d848c119567c1d0e0c662d8c3",
             ["avcodec-58.dll"] =
                 "4da59c6e58d78bb2b751553d2840421850309d42f1534734543b6854205a65c4",
             ["avutil-56.dll"] =

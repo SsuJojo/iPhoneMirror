@@ -12,13 +12,16 @@ with one stable device ID. This follows UxPlay's receiver model and prevents
 iOS from hiding a route whose service identity, `/info` identity, or pairing
 endpoint disagrees.
 
-Mirror mode uses AirPlayServer v1.1.2's upstream mirroring/audio negotiation
-profile (`0x5A7FFEE6,0x0`). Combined/media mode enables UxPlay's AirPlay video
-and HLS bits 0 and 4 (`0x5A7FFEF7,0x0`) because this receiver implements the
-corresponding URL-video handlers. Within either mode, the `_airplay._tcp` and
-`_raop._tcp` DNS-SD records, `/info`, and `/server-info` advertise the same
-profile. Screen-mirroring stream type 110 continues to the decoded-frame IPC
-path, while `/play`, `/playback-info`, and `/stop` use the URL-video IPC path.
+Mirror mode retains AirPlayServer v1.1.2's legacy-pairing feature profile
+(`0x5A7FFEE6,0x0`) throughout DNS-SD and receiver capability responses. The
+affected build advertised the UxPlay profile with legacy pairing disabled
+(`0x527FFEE6,0x0`) while the observed iOS mirroring session remained in
+handshake before media began. Combined/media mode adds AirPlay video and HLS
+bits 0 and 4 (`0x5A7FFEF7,0x0`) consistently in
+the `_airplay._tcp` TXT record, receiver capability responses, and RAOP record.
+Screen-mirroring
+stream type 110 continues to the decoded-frame IPC path, while `/play`,
+`/playback-info`, and `/stop` use the URL-video IPC path.
 `/rate` pause/resume and `/scrub` seek requests are forwarded as distinct IPC
 controls without reloading the media URL. Both the AirPlay HTTP and RAOP ports
 handle media controls,

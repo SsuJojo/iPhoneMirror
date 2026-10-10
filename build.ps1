@@ -56,7 +56,7 @@ if ($PrepareUxPlayComponent -and ($TestBuild -or $OmitUxPlayRuntime -or -not $Ve
 }
 # Development/test app versions must keep the pinned component release. Only
 # the release transaction may generate metadata for an asset awaiting upload.
-if (-not $NoPublish -and -not $UseUxPlayRuntime -and -not $PrepareUxPlayComponent) {
+if (-not $NoPublish -and -not $UseUxPlayRuntime -and -not $PrepareUxPlayComponent -and -not $OmitUxPlayRuntime) {
     & (Join-Path $Root 'scripts/verify_uxplay_publication.ps1')
 }
 $OutputsRoot = Join-Path $Root 'outputs'

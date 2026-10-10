@@ -196,7 +196,9 @@ foreach ($Marker in @('IPHONE_MIRROR_AIRPLAY_WIDTH', 'IPHONE_MIRROR_AIRPLAY_HEIG
         throw "Built AirPlay receiver is missing runtime capability marker: $Marker"
     }
 }
-if ($BinaryAscii.Contains('0x5A7FFFF7,0x1E') -or
+if ($BinaryAscii.Contains('0x527FFEE6') -or
+    $BinaryAscii.Contains('0x527FFEF7') -or
+    $BinaryAscii.Contains('0x5A7FFFF7,0x1E') -or
     $BinaryAscii.Contains('0x5A7FFFC0,0x1E') -or
     $BinaryAscii.Contains('0x484051C0,0x0') -or
     $BinaryAscii.Contains('0x1A7FFEC0,0x0') -or
@@ -233,11 +235,8 @@ if ($Install) {
     $StagedManifest = "$Manifest.$TransactionId.tmp"
     $BackupBinary = "$TargetBinary.$TransactionId.bak"
     $BackupManifest = "$Manifest.$TransactionId.bak"
-    # File.Replace requires a concrete backup path on the Windows/.NET
-    # runtime used by the build environment. Keep separate rollback copies so
-    # a failure in the second replacement can still restore both targets.
-    $ReplaceBackupBinary = "$TargetBinary.$TransactionId.replace.bak"
-    $ReplaceBackupManifest = "$Manifest.$TransactionId.replace.bak"
+    # Keep rollback copies so a failure while installing the second file can
+    # restore both targets after the same-volume atomic moves.
     $TargetsMayBeModified = $false
     $InstallComplete = $false
     $RollbackComplete = $false
@@ -249,8 +248,8 @@ if ($Install) {
         Copy-Item -LiteralPath $Manifest -Destination $BackupManifest
 
         $TargetsMayBeModified = $true
-        [IO.File]::Replace($StagedBinary, $TargetBinary, $ReplaceBackupBinary)
-        [IO.File]::Replace($StagedManifest, $Manifest, $ReplaceBackupManifest)
+        [IO.File]::Move($StagedBinary, $TargetBinary, $true)
+        [IO.File]::Move($StagedManifest, $Manifest, $true)
         $InstalledHash = (Get-FileHash -LiteralPath $TargetBinary `
             -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($InstalledHash -ne $Hash -or
@@ -291,8 +290,7 @@ if ($Install) {
         throw $installError
     }
     finally {
-        foreach ($temporary in @($StagedBinary, $StagedManifest,
-                $ReplaceBackupBinary, $ReplaceBackupManifest)) {
+        foreach ($temporary in @($StagedBinary, $StagedManifest)) {
             Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue
         }
         if ($InstallComplete -or $RollbackComplete) {

@@ -43,13 +43,15 @@ $Global = [IO.File]::ReadAllText($GlobalFile, $Encoding)
 $Global = $Global.Replace('"AppleTV14,1"', '"AppleTV3,2"')
 $Global = $Global.Replace('"Kodi,1"', '"AppleTV3,2"')
 $Global = $Global.Replace('"845.5.1"', '"220.68"')
+$Global = $Global.Replace('#define GLOBAL_FEATURES_1 0x527FFEE6U',
+	'#define GLOBAL_FEATURES_1 0x5A7FFEE6U')
 $GlobalNewLine = if ($Global.Contains("`r`n")) { "`r`n" } else { "`n" }
 $Global = $Global.Replace('#define GLOBAL_FEATURES 0x7',
-    '#define GLOBAL_FEATURES_1 0x5A7FFEE6U' + $GlobalNewLine +
-    '#define GLOBAL_FEATURES_2 0x00000000U')
+	'#define GLOBAL_FEATURES_1 0x5A7FFEE6U' + $GlobalNewLine +
+	'#define GLOBAL_FEATURES_2 0x00000000U')
 if (-not $Global.Contains('"AppleTV3,2"') -or
-    -not $Global.Contains('"220.68"') -or
-    -not $Global.Contains('#define GLOBAL_FEATURES_1 0x5A7FFEE6U') -or
+	-not $Global.Contains('"220.68"') -or
+	-not $Global.Contains('#define GLOBAL_FEATURES_1 0x5A7FFEE6U') -or
     -not $Global.Contains('#define GLOBAL_FEATURES_2 0x00000000U')) {
     throw 'UxPlay-compatible AirPlay model/version/features were not applied.'
 }

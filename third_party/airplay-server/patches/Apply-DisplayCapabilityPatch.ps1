@@ -127,18 +127,6 @@ $DynamicResponse = @'
 		 !strcmp(iphone_mirror_mode, "combined"));
 	unsigned long long iphone_mirror_features = iphone_mirror_media_cast ?
 		0x5A7FFEF7ULL : 0x5A7FFEE6ULL;
-	if (iphone_mirror_media_cast) {
-		const unsigned char mirror_features[] =
-			{ 0x00, 0x00, 0x00, 0x00, 0x5a, 0x7f, 0xfe, 0xe6 };
-		for (size_t index = 0;
-			index + sizeof(mirror_features) <= sizeof(info); ++index) {
-			if (!memcmp(info + index, mirror_features,
-					sizeof(mirror_features))) {
-				info[index + sizeof(mirror_features) - 1] = 0xf7;
-				break;
-			}
-		}
-	}
 	plist_t capability_root = NULL;
 	plist_from_bin(info, sizeof(info), &capability_root);
 	plist_t displays = capability_root ?
