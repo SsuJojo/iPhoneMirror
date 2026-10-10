@@ -5391,9 +5391,9 @@ var deviceA = new DeviceCaptureState { Udid = "phone-a", Handle = new NativeSess
 var deviceB = new DeviceCaptureState { Udid = "phone-b", Handle = new NativeSessionHandle(22, ownsHandle: false), FrameRate = 30, Volume = 25 };
 Equal(UsbProjectionMode.Demo, deviceA.UsbProjectionMode,
     "USB projection defaults to recommended demo mode");
-deviceA.UsbProjectionMode = UsbProjectionMode.AirPlay;
+deviceA.UsbProjectionMode = UsbProjectionMode.NativeAdaptive;
 deviceB.UsbProjectionMode = UsbProjectionMode.Aisi;
-Equal(UsbProjectionMode.AirPlay, deviceA.UsbProjectionMode,
+Equal(UsbProjectionMode.NativeAdaptive, deviceA.UsbProjectionMode,
     "device A keeps its independent USB projection mode");
 Equal(UsbProjectionMode.Aisi, deviceB.UsbProjectionMode,
     "device B keeps its independent USB projection mode");
