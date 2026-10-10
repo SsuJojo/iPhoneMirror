@@ -374,6 +374,38 @@ internal static partial class Program
             // Parsing as keyboard reports also rejects any leaked paste or
             // button frame, which has no usages property.
             Require(ReadPackets().All(p => p.Length == 0), "Expired shortcut/paste reached the writer.");
+
+            // A commit immediately after IME start must wait for the ownership
+            // reset to drain an in-flight USB send, then capture a fresh guard.
+            Focus(window);
+            KeyboardCall(window, "TryEnterDirectKeyboardInputMode");
+            AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+            Require((bool)KeyboardField(window, "IsDirectKeyboardInputModeActive"),
+                "Direct keyboard owner did not reopen before the IME handoff test.");
+            var preImeGuard = (Func<bool>)KeyboardCall(window, "CaptureKeyboardSendGuard", mainHandle)!;
+            packets.SetLength(0);
+            writerGate.Wait();
+            Task pendingPaste;
+            Task trackedPaste;
+            try
+            {
+                pendingPaste = (Task)KeyboardCall(vm, "SendUsbPasteTextAsync", "pending", udid, preImeGuard)!;
+                trackedPaste = (Task)KeyboardCall(window, "TrackKeyboardSendAsync", pendingPaste)!;
+                KeyboardCall(window, "OnImeCompositionChanged", true);
+                KeyboardCall(window, "OnControlTextInput", "IME immediate");
+                Require(packets.Length == 0, "IME text bypassed the pending ownership handoff.");
+            }
+            finally { writerGate.Release(); }
+            AwaitMapping(trackedPaste);
+            AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+            var clock = Stopwatch.StartNew();
+            while (!System.Text.Encoding.UTF8.GetString(packets.ToArray())
+                .Contains("\"text\":\"IME immediate\"", StringComparison.Ordinal) &&
+                clock.Elapsed < TimeSpan.FromSeconds(5))
+                AdvanceDispatcher(TimeSpan.FromMilliseconds(5));
+            Require(System.Text.Encoding.UTF8.GetString(packets.ToArray())
+                    .Contains("\"text\":\"IME immediate\"", StringComparison.Ordinal),
+                "Immediate IME commit was dropped while USB keyboard ownership changed.");
         }
         TestKeyboardHotkeyScope(window, other, udid, Focus);
     }

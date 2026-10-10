@@ -1421,14 +1421,33 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         HandleControlKeyboardInput(e, _viewModel.SelectedDevice?.Udid);
     }
 
-    private void OnControlTextInput(string text)
+    private async void OnControlTextInput(string text)
     {
         var udid = _viewModel.SelectedDevice?.Udid;
         var window = _windowSource?.Handle ?? 0;
         if (string.IsNullOrEmpty(text) || !_viewModel.IsUsbControlTarget(udid) ||
             !CanForwardControlKeyboard(udid, window)) return;
-        _ = _viewModel.SendUsbPasteTextAsync(text, udid,
-            CaptureKeyboardSendGuard(window));
+        try
+        {
+            // IME start resets key ownership. Wait for its drain/reopen before
+            // capturing a guard, otherwise an immediate commit can be dropped.
+            while (true)
+            {
+                var handoff = _keyboardHandoff;
+                await handoff;
+                if (ReferenceEquals(handoff, _keyboardHandoff)) break;
+            }
+            if (!IsDirectKeyboardInputModeActive ||
+                !_viewModel.IsUsbControlTarget(udid) ||
+                !CanForwardControlKeyboard(udid, window)) return;
+            await TrackKeyboardSendAsync(_viewModel.SendUsbPasteTextAsync(text, udid,
+                CaptureKeyboardSendGuard(window)));
+        }
+        catch (Exception error)
+        {
+            DiagnosticLogger.ReverseControlWarning("keyboard_input", "ime_text_send_failed",
+                ("error", error.Message));
+        }
     }
 
     private void OnImeCompositionChanged(bool composing)

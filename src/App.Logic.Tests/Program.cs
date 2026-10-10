@@ -5389,11 +5389,11 @@ Equal(false, SingleInstanceCoordinator.IsSameExecutable(currentExecutable, null)
 
 var deviceA = new DeviceCaptureState { Udid = "phone-a", Handle = new NativeSessionHandle(11, ownsHandle: false), FrameRate = 60, Volume = 80 };
 var deviceB = new DeviceCaptureState { Udid = "phone-b", Handle = new NativeSessionHandle(22, ownsHandle: false), FrameRate = 30, Volume = 25 };
-Equal(UsbProjectionMode.Demo, deviceA.UsbProjectionMode,
-    "USB projection defaults to recommended demo mode");
-deviceA.UsbProjectionMode = UsbProjectionMode.NativeAdaptive;
-deviceB.UsbProjectionMode = UsbProjectionMode.Aisi;
 Equal(UsbProjectionMode.NativeAdaptive, deviceA.UsbProjectionMode,
+    "USB projection defaults to native adaptive mode");
+deviceA.UsbProjectionMode = UsbProjectionMode.PureNative;
+deviceB.UsbProjectionMode = UsbProjectionMode.Aisi;
+Equal(UsbProjectionMode.PureNative, deviceA.UsbProjectionMode,
     "device A keeps its independent USB projection mode");
 Equal(UsbProjectionMode.Aisi, deviceB.UsbProjectionMode,
     "device B keeps its independent USB projection mode");
