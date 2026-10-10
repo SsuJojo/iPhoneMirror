@@ -385,6 +385,9 @@ internal static partial class Program
                 AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
                 Require((bool)KeyboardField(window, "IsDirectKeyboardInputModeActive"),
                     "Direct keyboard owner did not reopen before the IME handoff test.");
+                var keyboardSends = (HashSet<Task>)KeyboardField(window, "_keyboardSends");
+                Require(keyboardSends.Count == 0,
+                    "Previous keyboard sends were not drained before the IME handoff test.");
                 var preImeGuard = (Func<bool>)KeyboardCall(window, "CaptureKeyboardSendGuard", mainHandle)!;
                 packets.SetLength(0);
                 writerGate.Wait();
@@ -396,7 +399,7 @@ internal static partial class Program
                     trackedPaste = (Task)KeyboardCall(window, "TrackKeyboardSendAsync", pendingPaste)!;
                     KeyboardCall(window, "OnImeCompositionChanged", true);
                     KeyboardCall(window, "OnControlTextInput", "IME immediate");
-                    Require(((HashSet<Task>)KeyboardField(window, "_keyboardSends")).Count == 1,
+                    Require(keyboardSends.Count == 1,
                         "IME paste entered the send queue before the keyboard handoff completed.");
                 }
                 finally { writerGate.Release(); }
