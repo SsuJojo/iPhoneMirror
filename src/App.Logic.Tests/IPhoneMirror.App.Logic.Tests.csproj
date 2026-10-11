@@ -44,6 +44,7 @@
     <Compile Include="..\App\Localization\LocalizationService.cs" Link="LocalizationService.cs" />
     <Compile Include="..\App\Localization\LocalizedText.cs" Link="LocalizedText.cs" />
     <Compile Include="..\App\Services\WirelessReceiverService.cs" Link="WirelessReceiverService.cs" />
+    <Compile Include="..\App\Services\WirelessReceiverStartupPolicy.cs" Link="WirelessReceiverStartupPolicy.cs" />
     <Compile Include="..\App\Services\UxPlayComponent.cs" Link="UxPlayComponent.cs" />
     <Compile Include="..\App\Services\WirelessStallRecoveryTracker.cs" Link="WirelessStallRecoveryTracker.cs" />
     <Compile Include="..\App\Services\NativeLogTailReader.cs" Link="NativeLogTailReader.cs" />

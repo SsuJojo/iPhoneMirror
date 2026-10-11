@@ -13,6 +13,8 @@ internal sealed class MediaCastReceiverController(
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _startError;
     private DateTime _automaticStartNotBeforeUtc;
+    private DateTime _startupDeadlineUtc;
+    private int _consecutiveStartupFailures;
 
     internal bool Running { get; private set; }
     internal bool Ready { get; private set; }
@@ -35,8 +37,37 @@ internal sealed class MediaCastReceiverController(
             var status = core.GetMediaCastReceiverStatus();
             Running = status.Running;
             Ready = status.Ready;
-            if (Running) return true;
-            if (DateTime.UtcNow < _automaticStartNotBeforeUtc) return false;
+            var now = DateTime.UtcNow;
+            if (Running && Ready)
+            {
+                _startupDeadlineUtc = default;
+                _automaticStartNotBeforeUtc = default;
+                _consecutiveStartupFailures = 0;
+                _startError = null;
+                return true;
+            }
+            if (_startupDeadlineUtc != default && !Running)
+            {
+                _startupDeadlineUtc = default;
+                RegisterStartupFailure(LocalizationService.Get("WirelessStartupTimedOut"), now);
+                return false;
+            }
+            if (Running)
+            {
+                if (_startupDeadlineUtc == default)
+                    _startupDeadlineUtc = now + WirelessReceiverStartupPolicy.ReadinessTimeout;
+                if (now >= _startupDeadlineUtc)
+                {
+                    await Task.Run(core.StopMediaCastReceiver);
+                    Running = Ready = false;
+                    _startupDeadlineUtc = default;
+                    RegisterStartupFailure(
+                        LocalizationService.Get("WirelessStartupTimedOut"), DateTime.UtcNow);
+                    return false;
+                }
+                return true;
+            }
+            if (now < _automaticStartNotBeforeUtc) return false;
             if (_receiver.GetExecutablePath(WirelessReceiverBackend.Original) is not
                 { } hostPath) return false;
             var runtime = await Task.Run(() =>
@@ -44,21 +75,35 @@ internal sealed class MediaCastReceiverController(
             if (!runtime.Success)
             {
                 Running = Ready = false;
-                _startError = WirelessReceiverService.DescribeProbeFailure(runtime);
-                _automaticStartNotBeforeUtc = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+                RegisterStartupFailure(
+                    WirelessReceiverService.DescribeProbeFailure(runtime), DateTime.UtcNow);
                 return false;
             }
             var result = await Task.Run(() => core.StartMediaCastReceiver(
                 WirelessReceiverConfiguration.DefaultReceiverName, hostPath));
             Running = result.Success;
             Ready = false;
-            _startError = result.Success ? null : result.Message;
-            return result.Success;
+            if (result.Success)
+            {
+                _startupDeadlineUtc = DateTime.UtcNow +
+                    WirelessReceiverStartupPolicy.ReadinessTimeout;
+                return true;
+            }
+            RegisterStartupFailure(result.Message, DateTime.UtcNow);
+            return false;
         }
         finally
         {
             _gate.Release();
         }
+    }
+
+    private void RegisterStartupFailure(string error, DateTime now)
+    {
+        _startError = error;
+        _consecutiveStartupFailures++;
+        _automaticStartNotBeforeUtc = now +
+            WirelessReceiverStartupPolicy.GetRetryDelay(_consecutiveStartupFailures);
     }
 
     internal async Task StopAsync()
@@ -68,6 +113,9 @@ internal sealed class MediaCastReceiverController(
         {
             await Task.Run(core.StopMediaCastReceiver);
             Running = Ready = false;
+            _startupDeadlineUtc = default;
+            _automaticStartNotBeforeUtc = default;
+            _consecutiveStartupFailures = 0;
             _startError = null;
         }
         finally
@@ -81,7 +129,7 @@ internal sealed class MediaCastReceiverController(
         if (!SupportsCurrentWirelessBackend)
             return LocalizationService.Get("MediaCastRequiresOriginalBackend");
         if (!IsAvailable) return LocalizationService.Get("MediaCastReceiverMissing");
-        if (!Running && !string.IsNullOrWhiteSpace(_startError))
+        if (!Ready && !string.IsNullOrWhiteSpace(_startError))
             return LocalizationService.Format("StartFailedFormat", _startError);
         return LocalizationService.Get(Ready ? "MediaCastReady" : "MediaCastStarting");
     }

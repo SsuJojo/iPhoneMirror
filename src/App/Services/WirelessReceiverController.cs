@@ -14,7 +14,9 @@ internal sealed class WirelessReceiverController(
     private static readonly TimeSpan UxPlayStartupGracePeriod =
         TimeSpan.FromSeconds(15);
     private DateTime _automaticStartNotBeforeUtc;
+    private DateTime _startupDeadlineUtc;
     private DateTime _lastReceiverStartUtc;
+    private int _consecutiveStartupFailures;
     private WirelessReceiverBackend _lastStartedBackend =
         WirelessReceiverBackend.Original;
     private bool _automaticRestartBlocked;
@@ -54,8 +56,7 @@ internal sealed class WirelessReceiverController(
             if (!_receiver.IsBackendAvailable(selectedBackend))
             {
                 Running = Ready = false;
-                StartError = null;
-                return new(false, null, false);
+                return new(false, StartError, false);
             }
 
             var automaticStart = receiverName is null && displayProfile is null &&
@@ -64,11 +65,44 @@ internal sealed class WirelessReceiverController(
             var status = core.GetWirelessReceiverStatus();
             Running = status.Running;
             Ready = status.Ready;
-            if (!Running && automaticStart && !_automaticRestartBlocked &&
+            var now = DateTime.UtcNow;
+
+            if (Running && Ready)
+            {
+                _startupDeadlineUtc = default;
+                _automaticStartNotBeforeUtc = default;
+                _consecutiveStartupFailures = 0;
+                StartError = null;
+                return new(true, null, false);
+            }
+
+            if (_startupDeadlineUtc != default && !Running)
+            {
+                _startupDeadlineUtc = default;
+                var error = LocalizationService.Get("WirelessStartupTimedOut");
+                return RegisterStartupFailure(error, now);
+            }
+
+            if (Running && !Ready)
+            {
+                if (_startupDeadlineUtc == default)
+                    _startupDeadlineUtc = now + WirelessReceiverStartupPolicy.ReadinessTimeout;
+                if (now >= _startupDeadlineUtc)
+                {
+                    await Task.Run(core.StopWirelessReceiver);
+                    Running = Ready = false;
+                    _startupDeadlineUtc = default;
+                    var error = LocalizationService.Get("WirelessStartupTimedOut");
+                    return RegisterStartupFailure(error, DateTime.UtcNow);
+                }
+                return new(false, StartError, false);
+            }
+
+            if (automaticStart && !_automaticRestartBlocked &&
                 selectedBackend == WirelessReceiverBackend.UxPlay &&
                 _lastStartedBackend == WirelessReceiverBackend.UxPlay &&
                 _lastReceiverStartUtc != default &&
-                DateTime.UtcNow - _lastReceiverStartUtc < UxPlayStartupGracePeriod)
+                now - _lastReceiverStartUtc < UxPlayStartupGracePeriod)
             {
                 // A missing GStreamer plugin or invalid UxPlay pipeline exits
                 // just after the IPC host reports Ready. Do not restart that
@@ -83,17 +117,15 @@ internal sealed class WirelessReceiverController(
                 Running = Ready = false;
                 return new(false, StartError, false);
             }
-            if (automaticStart && DateTime.UtcNow < _automaticStartNotBeforeUtc)
+            if (automaticStart && now < _automaticStartNotBeforeUtc)
             {
                 Running = Ready = false;
-                return new(false, null, false);
+                return new(false, StartError, false);
             }
 
-            if (Running)
-            {
-                StartError = null;
-                return new(true, null, false);
-            }
+            if (Running) return new(false, StartError, false);
+            _startupDeadlineUtc = default;
+            _lastReceiverStartUtc = default;
 
             var hostPath = _receiver.GetExecutablePath(selectedBackend);
             if (hostPath is null) return new(false, null, false);
@@ -101,12 +133,8 @@ internal sealed class WirelessReceiverController(
             if (!runtime.Success)
             {
                 Running = Ready = false;
-                var error = WirelessReceiverService.DescribeProbeFailure(runtime);
-                var isNewRuntimeError = !string.Equals(StartError, error,
-                    StringComparison.Ordinal);
-                StartError = error;
-                _automaticStartNotBeforeUtc = DateTime.UtcNow + TimeSpan.FromSeconds(30);
-                return new(false, error, isNewRuntimeError);
+                return RegisterStartupFailure(
+                    WirelessReceiverService.DescribeProbeFailure(runtime), DateTime.UtcNow);
             }
             var sanitized = WirelessReceiverConfiguration.SanitizeReceiverName(
                 receiverName ?? (automaticStart ? ReceiverName : AppliedReceiverName));
@@ -122,15 +150,16 @@ internal sealed class WirelessReceiverController(
                 AppliedBackend = selectedBackend;
                 _lastStartedBackend = selectedBackend;
                 _lastReceiverStartUtc = DateTime.UtcNow;
+                _startupDeadlineUtc = _lastReceiverStartUtc +
+                    WirelessReceiverStartupPolicy.ReadinessTimeout;
                 AppliedReceiverName = sanitized;
                 AppliedProfile = profile;
-                StartError = null;
+                // Keep the last failure visible while the child process exists
+                // but has not sent its Ready IPC message. Clear only on Ready.
                 return new(true, null, false);
             }
 
-            var isNewError = !string.Equals(StartError, started.Message, StringComparison.Ordinal);
-            StartError = started.Message;
-            return new(false, started.Message, isNewError);
+            return RegisterStartupFailure(started.Message, DateTime.UtcNow);
         }
         finally
         {
@@ -138,7 +167,19 @@ internal sealed class WirelessReceiverController(
         }
     }
 
-    internal async Task StopAsync(TimeSpan automaticStartDelay = default)
+    private WirelessReceiverStartResult RegisterStartupFailure(string error,
+        DateTime now)
+    {
+        var isNewError = !string.Equals(StartError, error, StringComparison.Ordinal);
+        StartError = error;
+        _consecutiveStartupFailures++;
+        _automaticStartNotBeforeUtc = now +
+            WirelessReceiverStartupPolicy.GetRetryDelay(_consecutiveStartupFailures);
+        return new(false, error, isNewError);
+    }
+
+    internal async Task StopAsync(TimeSpan automaticStartDelay = default,
+        bool preserveStartError = false)
     {
         await _lifecycleGate.WaitAsync();
         try
@@ -149,9 +190,11 @@ internal sealed class WirelessReceiverController(
         {
             _automaticStartNotBeforeUtc = DateTime.UtcNow + automaticStartDelay;
             _automaticRestartBlocked = false;
+            _startupDeadlineUtc = default;
             _lastReceiverStartUtc = default;
+            _consecutiveStartupFailures = 0;
             Running = Ready = false;
-            StartError = null;
+            if (!preserveStartError) StartError = null;
             _lifecycleGate.Release();
         }
     }
@@ -161,7 +204,7 @@ internal sealed class WirelessReceiverController(
         if (!Running && !IsBackendAvailable(Backend))
             return LocalizationService.Format("WirelessBackendUnavailableFormat",
                 WirelessReceiverConfiguration.GetBackendOption(Backend).Label);
-        if (!Running && !string.IsNullOrWhiteSpace(StartError))
+        if (!Ready && !string.IsNullOrWhiteSpace(StartError))
             return LocalizationService.Format("StartFailedFormat", StartError);
         if (!Running || !Ready) return LocalizationService.Get("WirelessStarting");
         return LocalizationService.Format("WirelessRunningWithBackendFormat",

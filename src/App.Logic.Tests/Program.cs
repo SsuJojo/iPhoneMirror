@@ -4082,6 +4082,16 @@ Equal(true, WirelessReceiverConfiguration.IsSupportedDisplayProfile(1280, 720, 3
     "wireless 720p weak-network profile is supported");
 Equal(false, WirelessReceiverConfiguration.IsSupportedDisplayProfile(1280, 720, 60),
     "unsupported wireless profile combinations are rejected");
+Equal(TimeSpan.FromSeconds(30), WirelessReceiverStartupPolicy.ReadinessTimeout,
+    "wireless receiver startup readiness has a bounded timeout");
+Equal(TimeSpan.FromSeconds(2), WirelessReceiverStartupPolicy.GetRetryDelay(1),
+    "first automatic receiver retry uses a short delay");
+Equal(TimeSpan.FromSeconds(4), WirelessReceiverStartupPolicy.GetRetryDelay(2),
+    "receiver retry delay doubles after a repeated failure");
+Equal(TimeSpan.FromSeconds(60), WirelessReceiverStartupPolicy.GetRetryDelay(8),
+    "receiver retry delay is capped at one minute");
+Equal(TimeSpan.Zero, WirelessReceiverStartupPolicy.GetRetryDelay(0),
+    "receiver retry policy has no delay before a failure");
 Equal(WirelessReceiverBackend.Original, WirelessReceiverConfiguration.NormalizeBackend(
         (WirelessReceiverBackend)99),
     "unknown wireless backend values normalize to the original implementation");
@@ -4132,6 +4142,29 @@ Equal(true,
     wirelessControllerSource.Contains("WirelessUxPlayStartupFailed", StringComparison.Ordinal) &&
     wirelessControllerSource.Contains("manual Apply is the explicit retry path", StringComparison.Ordinal),
     "a crashing UxPlay child is not relaunched by every background refresh");
+Equal(true,
+    wirelessControllerSource.Contains("WirelessReceiverStartupPolicy.ReadinessTimeout",
+        StringComparison.Ordinal) &&
+    wirelessControllerSource.Contains("RegisterStartupFailure", StringComparison.Ordinal) &&
+    wirelessControllerSource.Contains("if (!Ready && !string.IsNullOrWhiteSpace(StartError))",
+        StringComparison.Ordinal),
+    "wireless startup times out, backs off, and preserves errors until Ready");
+var wirelessApplyViewModelSource = File.ReadAllText(Path.Combine(sourceDirectory,
+    "App", "ViewModels", "MainViewModel.cs"));
+Equal(true, wirelessApplyViewModelSource.Contains("StopAsync(preserveStartError: true)",
+    StringComparison.Ordinal),
+    "applying wireless settings preserves the previous failure until Ready");
+var mediaCastControllerSource = File.ReadAllText(Path.Combine(sourceDirectory,
+    "App", "Services", "MediaCastReceiverController.cs"));
+Equal(true,
+    mediaCastControllerSource.Contains("RegisterStartupFailure", StringComparison.Ordinal) &&
+    mediaCastControllerSource.Contains("WirelessReceiverStartupPolicy.ReadinessTimeout",
+        StringComparison.Ordinal) &&
+    mediaCastControllerSource.Contains("if (!Ready && !string.IsNullOrWhiteSpace(_startError))",
+        StringComparison.Ordinal) &&
+    mediaCastControllerSource.Contains("await Task.Run(core.StopMediaCastReceiver);",
+        StringComparison.Ordinal),
+    "media-cast startup shares timeout, backoff, and error-preservation behavior");
 var uxPlayHostSource = File.ReadAllText(Path.Combine(sourceDirectory,
     "UxPlayHost", "UxPlayHost.cpp"));
 Equal(true,
@@ -5395,9 +5428,9 @@ var deviceA = new DeviceCaptureState { Udid = "phone-a", Handle = new NativeSess
 var deviceB = new DeviceCaptureState { Udid = "phone-b", Handle = new NativeSessionHandle(22, ownsHandle: false), FrameRate = 30, Volume = 25 };
 Equal(UsbProjectionMode.Demo, deviceA.UsbProjectionMode,
     "USB projection defaults to recommended demo mode");
-deviceA.UsbProjectionMode = UsbProjectionMode.AirPlay;
+deviceA.UsbProjectionMode = UsbProjectionMode.PureNative;
 deviceB.UsbProjectionMode = UsbProjectionMode.Aisi;
-Equal(UsbProjectionMode.AirPlay, deviceA.UsbProjectionMode,
+Equal(UsbProjectionMode.PureNative, deviceA.UsbProjectionMode,
     "device A keeps its independent USB projection mode");
 Equal(UsbProjectionMode.Aisi, deviceB.UsbProjectionMode,
     "device B keeps its independent USB projection mode");

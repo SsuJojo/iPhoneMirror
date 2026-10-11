@@ -643,6 +643,7 @@
     <system:String x:Key="WirelessLocalNetwork">本機網路</system:String>
     <system:String x:Key="WirelessReady">AirPlay 接收端已就緒</system:String>
     <system:String x:Key="WirelessStarting">正在啟動 AirPlay 接收端…</system:String>
+    <system:String x:Key="WirelessStartupTimedOut">AirPlay 接收端未能在 30 秒內就緒，已停止卡住的程序並將稍後重試。</system:String>
     <system:String x:Key="WirelessWaitingDevice">AirPlay 接收端已啟動，請在 iPhone 控制中心選擇螢幕鏡像。</system:String>
     <system:String x:Key="WirelessConnecting">AirPlay 裝置正在連線…</system:String>
     <system:String x:Key="WirelessStreaming">AirPlay 無線螢幕鏡像中</system:String>

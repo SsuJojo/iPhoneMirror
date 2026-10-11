@@ -3863,7 +3863,7 @@ internal sealed partial class MainViewModel : INotifyPropertyChanged
             await SyncWirelessSessionsLockedAsync([]);
             if (!WirelessReceiverConfiguration.SupportsMediaCast(backend))
                 await _mediaCast.StopAsync();
-            await _wireless.StopAsync();
+            await _wireless.StopAsync(preserveStartError: true);
             var started = await _wireless.EnsureStartedAsync(sanitized, profile, backend);
             RefreshWirelessStatus();
             if (started.Started)
