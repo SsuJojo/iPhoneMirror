@@ -48,8 +48,11 @@ internal sealed class MediaCastReceiverController(
             }
             if (_startupDeadlineUtc != default && !Running)
             {
+                // The child exited on its own before becoming Ready; nothing
+                // was stopped, so this is not a timeout.
                 _startupDeadlineUtc = default;
-                RegisterStartupFailure(LocalizationService.Get("WirelessStartupTimedOut"), now);
+                RegisterStartupFailure(
+                    LocalizationService.Get("WirelessStartupExitedEarly"), now);
                 return false;
             }
             if (Running)

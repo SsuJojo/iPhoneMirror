@@ -644,6 +644,7 @@
     <system:String x:Key="WirelessReady">AirPlay receiver ready</system:String>
     <system:String x:Key="WirelessStarting">Starting the AirPlay receiver…</system:String>
     <system:String x:Key="WirelessStartupTimedOut">The AirPlay receiver did not become ready within 30 seconds. The stalled process was stopped; automatic retry is delayed.</system:String>
+    <system:String x:Key="WirelessStartupExitedEarly">The AirPlay receiver process exited on its own before becoming ready. Automatic retry is delayed.</system:String>
     <system:String x:Key="WirelessWaitingDevice">The AirPlay receiver is running. Choose Screen Mirroring in iPhone Control Center.</system:String>
     <system:String x:Key="WirelessConnecting">An AirPlay device is connecting…</system:String>
     <system:String x:Key="WirelessStreaming">Wireless AirPlay mirroring</system:String>

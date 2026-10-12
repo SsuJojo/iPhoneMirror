@@ -644,6 +644,7 @@
     <system:String x:Key="WirelessReady">AirPlay 接收端已就绪</system:String>
     <system:String x:Key="WirelessStarting">正在启动 AirPlay 接收端…</system:String>
     <system:String x:Key="WirelessStartupTimedOut">AirPlay 接收端未能在 30 秒内就绪，已停止卡住的进程并将稍后重试。</system:String>
+    <system:String x:Key="WirelessStartupExitedEarly">AirPlay 接收端进程在就绪前自行退出，将稍后自动重试。</system:String>
     <system:String x:Key="WirelessWaitingDevice">AirPlay 接收端已启动，请在 iPhone 控制中心选择屏幕镜像。</system:String>
     <system:String x:Key="WirelessConnecting">AirPlay 设备正在连接…</system:String>
     <system:String x:Key="WirelessStreaming">AirPlay 无线投屏中</system:String>

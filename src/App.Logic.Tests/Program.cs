@@ -4140,8 +4140,16 @@ Equal(true,
     wirelessControllerSource.Contains("UxPlayStartupGracePeriod", StringComparison.Ordinal) &&
     wirelessControllerSource.Contains("_automaticRestartBlocked", StringComparison.Ordinal) &&
     wirelessControllerSource.Contains("WirelessUxPlayStartupFailed", StringComparison.Ordinal) &&
-    wirelessControllerSource.Contains("manual Apply is the explicit retry path", StringComparison.Ordinal),
+    wirelessControllerSource.Contains("manual Apply is the explicit retry path", StringComparison.Ordinal) &&
+    wirelessControllerSource.Contains("StringComparison.Ordinal", StringComparison.Ordinal),
     "a crashing UxPlay child is not relaunched by every background refresh");
+Equal(true,
+    wirelessControllerSource.Contains("WirelessStartupExitedEarly", StringComparison.Ordinal),
+    "a child exiting before Ready is not misreported as a stopped timeout");
+Equal(false,
+    wirelessControllerSource.Contains("if (Running) return new(false, StartError, false);",
+        StringComparison.Ordinal),
+    "unreachable post-timeout Running guard was removed");
 Equal(true,
     wirelessControllerSource.Contains("WirelessReceiverStartupPolicy.ReadinessTimeout",
         StringComparison.Ordinal) &&
@@ -4163,7 +4171,8 @@ Equal(true,
     mediaCastControllerSource.Contains("if (!Ready && !string.IsNullOrWhiteSpace(_startError))",
         StringComparison.Ordinal) &&
     mediaCastControllerSource.Contains("await Task.Run(core.StopMediaCastReceiver);",
-        StringComparison.Ordinal),
+        StringComparison.Ordinal) &&
+    mediaCastControllerSource.Contains("WirelessStartupExitedEarly", StringComparison.Ordinal),
     "media-cast startup shares timeout, backoff, and error-preservation behavior");
 var uxPlayHostSource = File.ReadAllText(Path.Combine(sourceDirectory,
     "UxPlayHost", "UxPlayHost.cpp"));

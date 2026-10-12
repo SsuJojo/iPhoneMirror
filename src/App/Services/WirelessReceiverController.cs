@@ -78,8 +78,15 @@ internal sealed class WirelessReceiverController(
 
             if (_startupDeadlineUtc != default && !Running)
             {
+                // The child exited on its own before becoming Ready; nothing
+                // was stopped, so this is not a timeout. For UxPlay this is
+                // the known early-exit startup failure; report it here so the
+                // grace-period guard below does not log a second error.
                 _startupDeadlineUtc = default;
-                var error = LocalizationService.Get("WirelessStartupTimedOut");
+                var error = LocalizationService.Get(
+                    _lastStartedBackend == WirelessReceiverBackend.UxPlay
+                        ? "WirelessUxPlayStartupFailed"
+                        : "WirelessStartupExitedEarly");
                 return RegisterStartupFailure(error, now);
             }
 
@@ -109,8 +116,11 @@ internal sealed class WirelessReceiverController(
                 // broken child every refresh tick and make AirPlay discovery
                 // flap; a manual Apply is the explicit retry path.
                 _automaticRestartBlocked = true;
-                StartError = LocalizationService.Get("WirelessUxPlayStartupFailed");
-                return new(false, StartError, true);
+                var uxPlayError = LocalizationService.Get("WirelessUxPlayStartupFailed");
+                var isNewError = !string.Equals(StartError, uxPlayError,
+                    StringComparison.Ordinal);
+                StartError = uxPlayError;
+                return new(false, StartError, isNewError);
             }
             if (automaticStart && _automaticRestartBlocked)
             {
@@ -123,8 +133,9 @@ internal sealed class WirelessReceiverController(
                 return new(false, StartError, false);
             }
 
-            if (Running) return new(false, StartError, false);
-            _startupDeadlineUtc = default;
+            // Running is always false here: Running && Ready returned above,
+            // and Running && !Ready returns inside the readiness-timeout
+            // branch. The startup deadline is likewise already cleared.
             _lastReceiverStartUtc = default;
 
             var hostPath = _receiver.GetExecutablePath(selectedBackend);

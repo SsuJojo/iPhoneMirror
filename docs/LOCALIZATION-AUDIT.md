@@ -1292,6 +1292,7 @@
 | WirelessSettingsTitle | 应用无线 AirPlay 设置 | 套用無線 AirPlay 設定 | 套用無線 AirPlay 設定 | Apply wireless AirPlay settings | — | ✅ 完全一致 | 保留 |
 | WirelessSettingsUnchanged | 名称和连接分辨率均未改变。 | 名稱和連接解像度均未改變。 | 名稱和連線解析度均未改變。 | The receiver name and connection resolution have not changed. | — | ✅ 完全一致 | 保留 |
 | WirelessStarting | 正在启动 AirPlay 接收端… | 正在啟動 AirPlay 接收端… | 正在啟動 AirPlay 接收端… | Starting the AirPlay receiver… | — | ⚠️ 需要优化 → ✅ 已修复 | 统一进行中状态的省略号 |
+| WirelessStartupExitedEarly | AirPlay 接收端进程在就绪前自行退出，将稍后自动重试。 | AirPlay 接收端程序在就緒前自行結束，將稍後自動重試。 | AirPlay 接收端程序在就緒前自行結束，將稍後自動重試。 | The AirPlay receiver process exited on its own before becoming ready. Automatic retry is delayed. | — | ✅ 完全一致 | 区分进程自行退出与超时被终止 |
 | WirelessStopped | 无线投屏已停止 | 無線螢幕鏡像已停止 | 無線螢幕鏡像已停止 | Wireless mirroring stopped | — | ✅ 完全一致 | 保留 |
 | WirelessStopping | 正在停止 AirPlay 接收端… | 正在停止 AirPlay 接收端… | 正在停止 AirPlay 接收端… | Stopping the AirPlay receiver… | — | ⚠️ 需要优化 → ✅ 已修复 | 统一进行中状态的省略号 |
 | WirelessStreaming | AirPlay 无线投屏中 | AirPlay 無線螢幕鏡像中 | AirPlay 無線螢幕鏡像中 | Wireless AirPlay mirroring | — | ✅ 完全一致 | 保留 |
