@@ -13,10 +13,6 @@ enum class DnsSdCompletionOwner : std::uint8_t {
     Cancel,
 };
 
-// Upstream may register once without constraining an adapter. Keep Windows'
-// all-interface value distinct from the retry state's internal zero value.
-inline constexpr std::uint32_t DnsSdAllInterfaces = 0xFFFFFFFFu;
-
 class DnsSdCompletionGate {
 public:
     [[nodiscard]] bool try_claim_callback() noexcept {
@@ -43,12 +39,19 @@ private:
         static_cast<std::uint8_t>(DnsSdCompletionOwner::Pending)};
 };
 
+// Windows DNS-SD uses InterfaceIndex=0 to publish on every eligible
+// interface. Keep that value distinct from the internal "not selected yet"
+// value used by the registration retry state machine.
+inline constexpr std::uint32_t DnsSdAllInterfaces = 0xFFFFFFFFu;
+
 constexpr std::uint32_t dns_sd_registration_interface(
     std::uint32_t requested, std::uint32_t preferred) noexcept {
-    // DNS-SD callers can arrive once per adapter; the first callback may be a
-    // virtual interface. A valid preferred LAN route must win that race.
-    if (requested == 0 && preferred != 0) return DnsSdAllInterfaces;
-    return preferred != 0 ? preferred : requested;
+    // Upstream registers the same receiver once per adapter. Those references
+    // share one logical registration here, so its native registration must
+    // cover every interface rather than retain the first reference's adapter.
+    // Otherwise Ethernet ownership hides the receiver from Mobile Hotspot.
+    if (preferred != 0) return DnsSdAllInterfaces;
+    return requested;
 }
 
 constexpr std::uint32_t dns_sd_native_interface(

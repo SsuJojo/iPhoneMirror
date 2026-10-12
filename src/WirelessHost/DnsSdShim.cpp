@@ -345,9 +345,7 @@ std::optional<AdapterPreference> adapter_preference(
         .index = index,
         .metric = metric,
         .type_rank = type_rank,
-        // A vEthernet external switch is virtual in name but can be the actual
-        // LAN interface exposed to Windows. Honor an explicit request for it.
-        .requested = index == requested,
+        .requested = index == requested && !virtual_adapter,
         .non_virtual = !virtual_adapter,
         .physical = physical,
         .gateway = adapter->FirstGatewayAddress != nullptr,
@@ -398,20 +396,6 @@ std::optional<std::uint32_t> preferred_dns_sd_interface_impl(
         const auto candidate = adapter_preference(adapter, requested);
         if (candidate && (!best || better_adapter(*candidate, *best)))
             best = candidate;
-    }
-
-    ULONG default_route_interface{};
-    // 8.8.8.8 is only a route-table probe; no packet is sent. The upstream
-    // DNS-SD caller can enumerate adapters and call us first for a virtual
-    // interface, so apply the route preference even when it supplied an index.
-    if (GetBestInterface(0x08080808U, &default_route_interface) == NO_ERROR) {
-        for (auto* adapter = adapters; adapter; adapter = adapter->Next) {
-            if (adapter_interface_index(adapter) == default_route_interface &&
-                adapter_preference(adapter, 0)) {
-                return iPhoneMirror::wireless::dns_sd_registration_interface(
-                    requested, default_route_interface);
-            }
-        }
     }
 
     if (best) {
