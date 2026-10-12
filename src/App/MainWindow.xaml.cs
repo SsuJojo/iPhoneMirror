@@ -1427,6 +1427,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var window = _windowSource?.Handle ?? 0;
         if (string.IsNullOrEmpty(text) || !_viewModel.IsUsbControlTarget(udid) ||
             !CanForwardControlKeyboard(udid, window)) return;
+        // An IME commit belongs to the current focus/ownership generation. A
+        // later blur must not deliver it after the same device regains focus.
+        var commitGeneration = Volatile.Read(ref _keyboardInputGeneration);
         try
         {
             // IME start resets key ownership. Wait for its drain/reopen before
@@ -1437,7 +1440,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 await handoff;
                 if (ReferenceEquals(handoff, _keyboardHandoff)) break;
             }
-            if (!IsDirectKeyboardInputModeActive ||
+            if (commitGeneration != Volatile.Read(ref _keyboardInputGeneration) ||
+                !IsDirectKeyboardInputModeActive ||
                 !_viewModel.IsUsbControlTarget(udid) ||
                 !CanForwardControlKeyboard(udid, window)) return;
             await TrackKeyboardSendAsync(_viewModel.SendUsbPasteTextAsync(text, udid,

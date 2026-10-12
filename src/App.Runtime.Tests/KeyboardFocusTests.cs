@@ -420,6 +420,34 @@ internal static partial class Program
                     "Immediate IME commit was dropped or duplicated during USB keyboard ownership change.");
                 Require(!packetText.Contains("\"text\":\"pending\"", StringComparison.Ordinal),
                     "Stale pre-composition paste was sent after the keyboard handoff.");
+
+                // A commit waiting for the same drain must not survive a blur
+                // and refocus, even when the selected USB device is unchanged.
+                Focus(window);
+                KeyboardCall(window, "TryEnterDirectKeyboardInputMode");
+                AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+                Require(keyboardSends.Count == 0,
+                    "Previous IME sends were not drained before the focus-loss test.");
+                var staleGuard = (Func<bool>)KeyboardCall(window, "CaptureKeyboardSendGuard", mainHandle)!;
+                packets.SetLength(0);
+                writerGate.Wait();
+                Task trackedStale;
+                try
+                {
+                    var pendingStale = (Task)KeyboardCall(vm, "SendUsbPasteTextAsync", "blocked", udid, staleGuard)!;
+                    trackedStale = (Task)KeyboardCall(window, "TrackKeyboardSendAsync", pendingStale)!;
+                    KeyboardCall(window, "OnImeCompositionChanged", true);
+                    KeyboardCall(window, "OnControlTextInput", "IME stale");
+                    Focus(other);
+                    Focus(window);
+                }
+                finally { writerGate.Release(); }
+                AwaitMapping(trackedStale);
+                AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+                AdvanceDispatcher(TimeSpan.FromMilliseconds(100));
+                packetText = System.Text.Encoding.UTF8.GetString(packets.ToArray());
+                Require(!packetText.Contains("\"text\":\"IME stale\"", StringComparison.Ordinal),
+                    "An IME commit survived focus loss and was sent after refocus.");
             }
         }
         TestKeyboardHotkeyScope(window, other, udid, Focus);
