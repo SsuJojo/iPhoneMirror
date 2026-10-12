@@ -6467,7 +6467,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             Width = _restoreBounds.Width;
             Height = _restoreBounds.Height;
             SetNavigationPaneVisible(true);
-            RootNavigation.IsPaneOpen = false;
+            RootNavigation.IsPaneOpen = true;
             RootLayout.Margin = new Thickness(12, 18, 18, 18);
             SetFullScreenPreviewBackground(false);
             HeaderGapRow.Height = new GridLength(18);

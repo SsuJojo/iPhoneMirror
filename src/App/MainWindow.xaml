@@ -735,7 +735,7 @@
     <Grid x:Name="AppShell">
         <ui:NavigationView x:Name="RootNavigation"
                            PaneDisplayMode="LeftMinimal"
-                           IsPaneOpen="False"
+                           IsPaneOpen="True"
                            IsPaneVisible="True"
                            IsPaneToggleVisible="True"
                            IsBackButtonVisible="Collapsed"
