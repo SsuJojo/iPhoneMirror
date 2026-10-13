@@ -87,6 +87,10 @@ public partial class MainWindow
             ? _windowSource?.Handle ?? 0 : 0;
     }
 
+    private bool IsMainPreviewImeComposingFor(string? udid) =>
+        _activeControlWindow == 0 && MainPreviewHost.IsImeComposing &&
+        _viewModel.IsUsbControlTarget(udid);
+
     private bool CanForwardControlKeyboard(string? udid, nint sourceWindow)
         => _mappingWindow?.IsEditing != true && CanForwardControlPointer(udid, sourceWindow) &&
             (sourceWindow != _windowSource?.Handle || !IsMainKeyboardEditorFocused());

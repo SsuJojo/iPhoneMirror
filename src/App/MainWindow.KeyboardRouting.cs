@@ -93,6 +93,7 @@ public partial class MainWindow
     private bool TryRoutePreviewKeyboardEvent(Key key, PreviewKeyboardKind kind)
     {
         if (!CanForwardControlKeyboard(ActiveInputDeviceUdid, _windowSource?.Handle ?? 0)) return false;
+        if (IsMainPreviewImeComposingFor(ActiveInputDeviceUdid)) return false;
         if (_keyboardHook != 0 || _rawKeyboardInputEnabled) return true;
         HandleControlKeyboardInput(new(kind, KeyInterop.VirtualKeyFromKey(key)), ActiveInputDeviceUdid);
         return true;
@@ -101,6 +102,7 @@ public partial class MainWindow
     private bool ProcessKeyboardHook(LowLevelKeyboardData data, nint message)
     {
         if ((data.Flags & 0x12) != 0) return false;
+        if (IsMainPreviewImeComposingFor(ActiveInputDeviceUdid)) return false;
         var down = message is 0x100 or 0x104;
         if (!down && message is not (0x101 or 0x105)) return false;
         var scan = (int)data.ScanCode;

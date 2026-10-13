@@ -365,6 +365,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _viewModel = new MainViewModel();
         MainPreviewHost.PointerInput += OnControlPointerInput;
         MainPreviewHost.KeyboardInput += OnControlKeyboardInput;
+        MainPreviewHost.ImeTextCommitted += OnControlTextInput;
+        MainPreviewHost.ImeCompositionChanged += OnImeCompositionChanged;
         _viewModel.SetMediaCastOutputProviders(
             CaptureMediaCastNv12Frame, CaptureMediaCastVideoFrame,
             afterSequence => _mediaCastAudioDecoder.GetPacket(afterSequence));
@@ -1405,6 +1407,46 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         HandleControlKeyboardInput(e, _viewModel.SelectedDevice?.Udid);
     }
 
+    private async void OnControlTextInput(string text)
+    {
+        var udid = _viewModel.SelectedDevice?.Udid;
+        var window = _windowSource?.Handle ?? 0;
+        if (string.IsNullOrEmpty(text) || !_viewModel.IsUsbControlTarget(udid) ||
+            !CanForwardControlKeyboard(udid, window)) return;
+        var commitGeneration = Volatile.Read(ref _keyboardInputGeneration);
+        try
+        {
+            while (true)
+            {
+                var handoff = _keyboardHandoff;
+                await handoff;
+                if (ReferenceEquals(handoff, _keyboardHandoff)) break;
+            }
+            if (commitGeneration != Volatile.Read(ref _keyboardInputGeneration) ||
+                !IsDirectKeyboardInputModeActive ||
+                !_viewModel.IsUsbControlTarget(udid) ||
+                !CanForwardControlKeyboard(udid, window)) return;
+            await TrackKeyboardSendAsync(_viewModel.SendUsbPasteTextAsync(text, udid,
+                CaptureKeyboardSendGuard(window)));
+        }
+        catch (Exception error)
+        {
+            DiagnosticLogger.ReverseControlWarning("keyboard_input", "ime_text_send_failed",
+                ("error", error.Message));
+        }
+    }
+
+    private void OnImeCompositionChanged(bool composing)
+    {
+        if (!composing) return;
+        var udid = _viewModel.SelectedDevice?.Udid;
+        if (_viewModel.IsUsbControlTarget(udid) && !IsKeyboardMappingInputModeActive &&
+            _keyboardRouter.RequestedMode == KeyboardInputMode.None)
+            TryEnterDirectKeyboardInputMode();
+        HandleControlKeyboardInput(new Controls.PreviewKeyboardEventArgs(
+            Controls.PreviewKeyboardKind.Reset, 0), udid);
+    }
+
     private void HandleControlKeyboardInput(
         Controls.PreviewKeyboardEventArgs e, string? sourceUdid = null,
         bool fromRawInput = false, nint? sourceWindow = null)
@@ -1442,6 +1484,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 ResetKeyboardOwnership();
             return;
         }
+        if (sourceWindow is null && _activeControlWindow == 0 &&
+            MainPreviewHost.IsImeComposing && _viewModel.IsUsbControlTarget(routeUdid))
+            return;
         if (_keyboardRouter.Mode == KeyboardInputMode.None &&
             _keyboardRouter.RequestedMode != KeyboardInputMode.None)
         {
@@ -1898,6 +1943,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (!_rawKeyboardInputEnabled || _activeControlWindow != 0 ||
             !CanForwardControlKeyboard(_viewModel.SelectedDevice?.Udid,
                 _windowSource?.Handle ?? 0) ||
+            IsMainPreviewImeComposingFor(_viewModel.SelectedDevice?.Udid) ||
             !TryEnterDirectKeyboardInputMode()) return;
         var isKeyUp = (keyboard.Flags & 0x01) != 0 || keyboard.Message is 0x0101 or 0x0105;
         var virtualKey = keyboard.VirtualKey;
@@ -6859,6 +6905,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (IsMainPreviewImeComposingFor(ActiveInputDeviceUdid)) return;
         var key = ResolvePreviewKey(e);
         if (_keyboardHook == 0)
         {
@@ -6893,6 +6940,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OnPreviewKeyUp(object sender, KeyEventArgs e)
     {
+        if (IsMainPreviewImeComposingFor(ActiveInputDeviceUdid)) return;
         if (_keyboardHook == 0)
             e.Handled = RouteKeyboardEvent(new(KeyInterop.VirtualKeyFromKey(ResolvePreviewKey(e)), 0, false),
                 false, ActiveInputDeviceUdid, _windowSource?.Handle ?? 0);

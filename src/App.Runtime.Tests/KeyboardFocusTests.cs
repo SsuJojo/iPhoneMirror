@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
@@ -119,7 +120,8 @@ internal static partial class Program
                     ((DeviceControlSession)KeyboardCall(vm, "GetOrCreateControl", udid)!).Router.Begin(udid,
                         mode == "Usb" ? ReverseControlMode.Usb : ReverseControlMode.Wireless);
                 ReleaseTestPhysicalKeys(window);
-                TestIsolatedKeyboardFocusRoute(window, other, udid, packets, mode != "Bluetooth");
+                TestIsolatedKeyboardFocusRoute(window, other, udid, packets,
+                    verifyPackets: mode != "Bluetooth", verifyImeHandoff: mode == "Usb");
                 if (shortcutReview)
                     TestShortcutReview(window, other, udid, packets, mode);
                 if (initializeHiddenHandle && mode != "Bluetooth")
@@ -150,7 +152,7 @@ internal static partial class Program
     }
 
     private static void TestIsolatedKeyboardFocusRoute(MainWindow window, Window other,
-        string udid, MemoryStream packets, bool verifyPackets)
+        string udid, MemoryStream packets, bool verifyPackets, bool verifyImeHandoff)
     {
         // This fixture supplies foreground snapshots and drives the production
         // handlers explicitly. Unrelated desktop activation must not race those
@@ -166,7 +168,7 @@ internal static partial class Program
         window.Activated -= activated;
         window.Deactivated -= deactivated;
         window.PreviewGotKeyboardFocus -= keyboardFocus;
-        try { TestKeyboardFocusRoute(window, other, udid, packets, verifyPackets); }
+        try { TestKeyboardFocusRoute(window, other, udid, packets, verifyPackets, verifyImeHandoff); }
         finally
         {
             window.Activated += activated;
@@ -176,7 +178,7 @@ internal static partial class Program
     }
 
     private static void TestKeyboardFocusRoute(MainWindow window, Window other,
-        string udid, MemoryStream packets, bool verifyPackets)
+        string udid, MemoryStream packets, bool verifyPackets, bool verifyImeHandoff)
     {
         var assembly = typeof(App).Assembly;
         var kindType = assembly.GetType("IPhoneMirror.App.Controls.PreviewKeyboardKind", true)!;
@@ -378,6 +380,109 @@ internal static partial class Program
             // Parsing as keyboard reports also rejects any leaked paste or
             // button frame, which has no usages property.
             Require(ReadPackets().All(p => p.Length == 0), "Expired shortcut/paste reached the writer.");
+
+            if (verifyImeHandoff)
+            {
+                // A commit immediately after IME start must wait for the ownership
+                // reset to drain an in-flight USB send, then capture a fresh guard.
+                Focus(window);
+                KeyboardCall(window, "TryEnterDirectKeyboardInputMode");
+                AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+                Require((bool)KeyboardField(window, "IsDirectKeyboardInputModeActive"),
+                    "Direct keyboard owner did not reopen before the IME handoff test.");
+                var keyboardSends = (HashSet<Task>)KeyboardField(window, "_keyboardSends");
+                Require(keyboardSends.Count == 0,
+                    "Previous keyboard sends were not drained before the IME handoff test.");
+                var preImeGuard = (Func<bool>)KeyboardCall(window, "CaptureKeyboardSendGuard", mainHandle)!;
+                packets.SetLength(0);
+                writerGate.Wait();
+                Task pendingPaste;
+                Task trackedPaste;
+                try
+                {
+                    pendingPaste = (Task)KeyboardCall(vm, "SendUsbPasteTextAsync", "pending", udid, preImeGuard)!;
+                    trackedPaste = (Task)KeyboardCall(window, "TrackKeyboardSendAsync", pendingPaste)!;
+                    KeyboardCall(window, "OnImeCompositionChanged", true);
+                    KeyboardCall(window, "OnControlTextInput", "IME immediate");
+                    Require(keyboardSends.Count == 1,
+                        "IME paste entered the send queue before the keyboard handoff completed.");
+                }
+                finally { writerGate.Release(); }
+                AwaitMapping(trackedPaste);
+                AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+                var clock = Stopwatch.StartNew();
+                var packetText = System.Text.Encoding.UTF8.GetString(packets.ToArray());
+                const string imePayload = "\"text\":\"IME immediate\"";
+                while (!packetText.Contains(imePayload, StringComparison.Ordinal) &&
+                    clock.Elapsed < TimeSpan.FromSeconds(5))
+                {
+                    AdvanceDispatcher(TimeSpan.FromMilliseconds(5));
+                    packetText = System.Text.Encoding.UTF8.GetString(packets.ToArray());
+                }
+                var imeIndex = packetText.IndexOf(imePayload, StringComparison.Ordinal);
+                Require(imeIndex >= 0 && imeIndex == packetText.LastIndexOf(imePayload, StringComparison.Ordinal),
+                    "Immediate IME commit was dropped or duplicated during USB keyboard ownership change.");
+                Require(!packetText.Contains("\"text\":\"pending\"", StringComparison.Ordinal),
+                    "Stale pre-composition paste was sent after the keyboard handoff.");
+
+                // A commit waiting for the same drain must not survive a blur
+                // and refocus, even when the selected USB device is unchanged.
+                Focus(window);
+                KeyboardCall(window, "TryEnterDirectKeyboardInputMode");
+                AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+                Require(keyboardSends.Count == 0,
+                    "Previous IME sends were not drained before the focus-loss test.");
+                var staleGuard = (Func<bool>)KeyboardCall(window, "CaptureKeyboardSendGuard", mainHandle)!;
+                packets.SetLength(0);
+                writerGate.Wait();
+                Task trackedStale;
+                try
+                {
+                    var pendingStale = (Task)KeyboardCall(vm, "SendUsbPasteTextAsync", "blocked", udid, staleGuard)!;
+                    trackedStale = (Task)KeyboardCall(window, "TrackKeyboardSendAsync", pendingStale)!;
+                    KeyboardCall(window, "OnImeCompositionChanged", true);
+                    KeyboardCall(window, "OnControlTextInput", "IME stale");
+                    Focus(other);
+                    Focus(window);
+                }
+                finally { writerGate.Release(); }
+                AwaitMapping(trackedStale);
+                AwaitMapping((Task)KeyboardField(window, "_keyboardHandoff"));
+                AdvanceDispatcher(TimeSpan.FromMilliseconds(100));
+                packetText = System.Text.Encoding.UTF8.GetString(packets.ToArray());
+                Require(!packetText.Contains("\"text\":\"IME stale\"", StringComparison.Ordinal),
+                    "An IME commit survived focus loss and was sent after refocus.");
+
+                var mainPreview = KeyboardField(window, "MainPreviewHost");
+                SetKeyboardField(mainPreview, "_isImeComposing", true);
+                packets.SetLength(0);
+                try
+                {
+                    var keyboardKind = typeof(App).Assembly.GetType(
+                        "IPhoneMirror.App.Controls.PreviewKeyboardKind", true)!;
+                    var previewRouted = (bool)KeyboardCall(window, "TryRoutePreviewKeyboardEvent",
+                        System.Windows.Input.Key.A, Enum.Parse(keyboardKind, "Down"))!;
+                    Require(!previewRouted,
+                        "WPF preview routing intercepted a key owned by the active Windows IME.");
+
+                    var lowLevelType = typeof(MainWindow).GetNestedType(
+                        "LowLevelKeyboardData", BindingFlags.NonPublic)!;
+                    var lowLevelData = Activator.CreateInstance(lowLevelType)!;
+                    SetKeyboardField(lowLevelData, "VirtualKey", 0x41u);
+                    SetKeyboardField(lowLevelData, "ScanCode", 0x1Eu);
+                    SetKeyboardField(lowLevelData, "Flags", 0u);
+                    var hookConsumed = (bool)KeyboardCall(window, "ProcessKeyboardHook",
+                        lowLevelData, (nint)0x100)!;
+                    Require(!hookConsumed,
+                        "The low-level hook must pass IME composition keys to Windows.");
+                    Require(ReadPackets().All(report => report.Length == 0),
+                        "IME composition keystrokes leaked to the USB keyboard route.");
+                }
+                finally
+                {
+                    SetKeyboardField(mainPreview, "_isImeComposing", false);
+                }
+            }
         }
         TestKeyboardHotkeyScope(window, other, udid, Focus);
     }
