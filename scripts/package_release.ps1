@@ -158,6 +158,7 @@ $RequiredArtifacts = @(
     'Wireless\licenses\NOTICE-FDK-AAC.txt',
     'Wireless\licenses\NOTICE-FFMPEG-BUILD.txt',
     'Wireless\licenses\SOURCE.md',
+    'Wireless\licenses\BUILD.json',
     'Wireless\licenses\SHA256SUMS.txt'
 )
 if ($UseUxPlayRuntime) {
@@ -607,6 +608,7 @@ try {
         'iPhoneMirror.UsbConfigurationSwitch.exe',
         'hostfxr.dll',
         'hostpolicy.dll', 'coreclr.dll', 'PresentationFramework.dll',
+        'Microsoft.AspNetCore.Server.Kestrel.Core.dll', 'Microsoft.AspNetCore.Http.dll',
         'createdump.exe', 'mscordaccore.dll', 'mscordbi.dll', 'mscorrc.dll',
         'tools\iUsbBridge.exe', 'tools\iUsbBridge.runtime.json'
     )

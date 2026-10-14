@@ -54,11 +54,9 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ($PrepareUxPlayComponent -and ($TestBuild -or $OmitUxPlayRuntime -or -not $Version)) {
     throw '-PrepareUxPlayComponent requires an explicit release -Version and cannot be used with -TestBuild or -OmitUxPlayRuntime.'
 }
-# Development/test app versions must keep the pinned component release. Only
-# the release transaction may generate metadata for an asset awaiting upload.
-if (-not $NoPublish -and -not $UseUxPlayRuntime -and -not $PrepareUxPlayComponent -and -not $OmitUxPlayRuntime) {
-    & (Join-Path $Root 'scripts/verify_uxplay_publication.ps1')
-}
+# Downloads resolve the latest public Release at runtime. The embedded descriptor
+# supplies a minimum component version and trusted legacy-cache hashes; its old
+# URL must not gate development/distribution builds.
 $OutputsRoot = Join-Path $Root 'outputs'
 $TestVersionRecord = Join-Path $Root 'work\test-build-version.txt'
 [xml]$appProject = Get-Content -LiteralPath (Join-Path $Root 'src\App\iPhoneMirror.App.csproj') -Raw
@@ -95,7 +93,9 @@ if ($TestBuild) {
 $VersionProperty = if ([string]::IsNullOrWhiteSpace($Version)) {
     $null
 } else {
-    "-p:Version=$Version"
+    $numericBuildVersion = ($Version -split '-', 2)[0] + '.0'
+    @("-p:Version=$Version", "-p:AssemblyVersion=$numericBuildVersion",
+        "-p:FileVersion=$numericBuildVersion")
 }
 
 $UsbControlRoot = if ([string]::IsNullOrWhiteSpace($env:IPHONE_MIRROR_USB_BRIDGE_ROOT)) {
@@ -787,6 +787,7 @@ try {
             'Wireless\licenses\NOTICE-FDK-AAC.txt',
             'Wireless\licenses\NOTICE-FFMPEG-BUILD.txt',
             'Wireless\licenses\SOURCE.md',
+            'Wireless\licenses\BUILD.json',
             'Wireless\licenses\SHA256SUMS.txt'
         )
         if ($UseUxPlayRuntime) {
@@ -1032,6 +1033,7 @@ try {
             'iPhoneMirror.runtimeconfig.json', 'iPhoneMirror.Driver.exe',
             'hostfxr.dll',
             'hostpolicy.dll', 'coreclr.dll', 'PresentationFramework.dll',
+            'Microsoft.AspNetCore.Server.Kestrel.Core.dll', 'Microsoft.AspNetCore.Http.dll',
             'createdump.exe', 'mscordaccore.dll', 'mscordbi.dll', 'mscorrc.dll'
         )
         $installerRequiredArtifacts += $installerBridgeRuntimeArtifacts

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using IPhoneMirror.App.Services;
+using IPhoneMirror.App.Models;
 
 namespace IPhoneMirror.App.Updater;
 
@@ -20,6 +21,8 @@ public enum ApplicationDisplayMode
 
 internal sealed class UpdateSettings
 {
+    public Services.Automation.AutomationSettings AutomationApi { get; set; } = new();
+    public Dictionary<string, DeviceVideoPreferences> DeviceVideoPreferences { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public KeyboardMappingSettings KeyboardMapping { get; set; } = new();
     public bool CheckOnStartup { get; set; } = !VersionManager.Current.IsPrerelease;
     public bool? LastSeenPrereleaseChannel { get; set; }
@@ -104,6 +107,8 @@ internal sealed class UpdateSettings
 
     internal UpdateSettings Clone() => new()
     {
+        AutomationApi = (AutomationApi ?? new()).Clone(),
+        DeviceVideoPreferences = new(DeviceVideoPreferences ?? [], StringComparer.OrdinalIgnoreCase),
         KeyboardMapping = KeyboardMapping.Clone(),
         CheckOnStartup = CheckOnStartup,
         LastSeenPrereleaseChannel = LastSeenPrereleaseChannel,

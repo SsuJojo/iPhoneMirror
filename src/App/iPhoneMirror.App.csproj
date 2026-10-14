@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="IPhoneMirror.App.Runtime.Tests" />
   </ItemGroup>
   <PropertyGroup>
@@ -12,7 +15,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>iPhoneMirror</AssemblyName>
     <RootNamespace>IPhoneMirror.App</RootNamespace>
-    <Version>1.8.5-pre</Version>
+    <Version>1.8.5-pre2</Version>
     <AssemblyVersion>1.8.5.0</AssemblyVersion>
     <FileVersion>1.8.5.0</FileVersion>
     <Authors>RayrenSX</Authors>
@@ -233,7 +236,7 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
-    <Content Include="..\..\third_party\airplay-server\LICENSE-*;..\..\third_party\airplay-server\NOTICE-*;..\..\third_party\airplay-server\SOURCE.md">
+    <Content Include="..\..\third_party\airplay-server\LICENSE-*;..\..\third_party\airplay-server\NOTICE-*;..\..\third_party\airplay-server\SOURCE.md;..\..\third_party\airplay-server\BUILD.json">
       <Link>Wireless\licenses\%(Filename)%(Extension)</Link>
       <TargetPath>Wireless\licenses\%(Filename)%(Extension)</TargetPath>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
