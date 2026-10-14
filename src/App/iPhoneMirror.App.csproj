@@ -127,15 +127,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="$(NuGetPackageRoot)wpf-ui\4.3.0\LICENSE.md"
-             Condition="Exists('$(NuGetPackageRoot)wpf-ui\4.3.0\LICENSE.md')">
+    <Content Include="$(NuGetPackageRoot)\wpf-ui\4.3.0\LICENSE.md"
+             Condition="Exists('$(NuGetPackageRoot)\wpf-ui\4.3.0\LICENSE.md')">
       <Link>licenses\WPF-UI-LICENSE.md</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
-    <Content Include="$(NuGetPackageRoot)wpf-ui\4.3.0\ThirdPartyNotices.txt"
-             Condition="Exists('$(NuGetPackageRoot)wpf-ui\4.3.0\ThirdPartyNotices.txt')">
+    <Content Include="$(NuGetPackageRoot)\wpf-ui\4.3.0\ThirdPartyNotices.txt"
+             Condition="Exists('$(NuGetPackageRoot)\wpf-ui\4.3.0\ThirdPartyNotices.txt')">
       <Link>licenses\WPF-UI-ThirdPartyNotices.txt</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
